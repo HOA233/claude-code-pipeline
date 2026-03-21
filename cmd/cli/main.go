@@ -39,10 +39,14 @@ func main() {
 		handlePipelines()
 	case "runs":
 		handleRuns()
+	case "schedules":
+		handleSchedules()
 	case "status":
 		handleStatus()
 	case "templates":
 		handleTemplates()
+	case "version":
+		printVersion()
 	case "help":
 		printUsage()
 	default:
@@ -59,12 +63,14 @@ func printUsage() {
 	fmt.Println()
 	fmt.Println("Commands:")
 	fmt.Println("  skills [list|get <id>|sync]    Manage skills")
-	fmt.Println("  tasks [list|create|get <id>]    Manage tasks")
-	fmt.Println("  pipelines [list|create|get]     Manage pipelines")
-	fmt.Println("  runs [list|get <id>]            View runs")
-	fmt.Println("  templates [list|use <id>]       Manage templates")
-	fmt.Println("  status                          Show service status")
-	fmt.Println("  help                            Show this help")
+	fmt.Println("  tasks [list|create|get <id>]   Manage tasks")
+	fmt.Println("  pipelines [list|create|get]    Manage pipelines")
+	fmt.Println("  runs [list|get <id>]           View runs")
+	fmt.Println("  schedules [list|create|get]    Manage schedules")
+	fmt.Println("  templates [list|use <id>]      Manage templates")
+	fmt.Println("  status                         Show service status")
+	fmt.Println("  version                        Show version")
+	fmt.Println("  help                           Show this help")
 	fmt.Println()
 	fmt.Println("Flags:")
 	fmt.Println("  -url string   API base URL (default: http://localhost:8080)")
@@ -262,6 +268,86 @@ func handleTemplates() {
 		resp := get("/api/templates")
 		printJSON(resp)
 	}
+}
+
+func handleSchedules() {
+	subCmd := "list"
+	if flag.NArg() > 1 {
+		subCmd = flag.Arg(1)
+	}
+
+	switch subCmd {
+	case "list":
+		resp := get("/api/schedules")
+		printJSON(resp)
+	case "get":
+		if flag.NArg() < 3 {
+			fmt.Println("Usage: schedules get <id>")
+			os.Exit(1)
+		}
+		id := flag.Arg(2)
+		resp := get("/api/schedules/" + id)
+		printJSON(resp)
+	case "create":
+		createSchedule()
+	case "trigger":
+		if flag.NArg() < 3 {
+			fmt.Println("Usage: schedules trigger <id>")
+			os.Exit(1)
+		}
+		id := flag.Arg(2)
+		resp := post("/api/schedules/"+id+"/trigger", nil)
+		printJSON(resp)
+	case "enable":
+		if flag.NArg() < 3 {
+			fmt.Println("Usage: schedules enable <id>")
+			os.Exit(1)
+		}
+		id := flag.Arg(2)
+		resp := post("/api/schedules/"+id+"/enable", nil)
+		printJSON(resp)
+	case "disable":
+		if flag.NArg() < 3 {
+			fmt.Println("Usage: schedules disable <id>")
+			os.Exit(1)
+		}
+		id := flag.Arg(2)
+		resp := post("/api/schedules/"+id+"/disable", nil)
+		printJSON(resp)
+	case "delete":
+		if flag.NArg() < 3 {
+			fmt.Println("Usage: schedules delete <id>")
+			os.Exit(1)
+		}
+		id := flag.Arg(2)
+		resp := delete("/api/schedules/" + id)
+		printJSON(resp)
+	}
+}
+
+func createSchedule() {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Print("Pipeline ID: ")
+	pipelineID, _ := reader.ReadString('\n')
+	pipelineID = strings.TrimSpace(pipelineID)
+
+	fmt.Print("Cron expression (e.g., '0 * * * *' for hourly): ")
+	cron, _ := reader.ReadString('\n')
+	cron = strings.TrimSpace(cron)
+
+	data := map[string]interface{}{
+		"pipeline_id": pipelineID,
+		"cron":        cron,
+		"enabled":     true,
+	}
+
+	resp := post("/api/schedules", data)
+	printJSON(resp)
+}
+
+func printVersion() {
+	fmt.Println("Claude Pipeline CLI v1.0.0")
 }
 
 func handleStatus() {
