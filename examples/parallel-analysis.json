@@ -1,0 +1,72 @@
+{
+  "name": "parallel-analysis",
+  "description": "并行分析流水线 - 同时执行多种分析",
+  "mode": "parallel",
+  "steps": [
+    {
+      "id": "security-audit",
+      "name": "安全审计",
+      "cli": "claude",
+      "action": "audit",
+      "params": {
+        "type": "security",
+        "target": "src/"
+      },
+      "timeout": 300
+    },
+    {
+      "id": "performance-analysis",
+      "name": "性能分析",
+      "cli": "claude",
+      "action": "analyze",
+      "params": {
+        "type": "performance",
+        "target": "src/"
+      },
+      "timeout": 300
+    },
+    {
+      "id": "dependency-check",
+      "name": "依赖检查",
+      "cli": "npm",
+      "action": "audit",
+      "params": {},
+      "timeout": 120
+    },
+    {
+      "id": "code-duplication",
+      "name": "代码重复检测",
+      "cli": "claude",
+      "action": "analyze",
+      "params": {
+        "type": "duplication",
+        "target": "src/"
+      },
+      "timeout": 180
+    },
+    {
+      "id": "complexity-analysis",
+      "name": "复杂度分析",
+      "cli": "claude",
+      "action": "analyze",
+      "params": {
+        "type": "complexity",
+        "target": "src/"
+      },
+      "timeout": 180
+    },
+    {
+      "id": "license-check",
+      "name": "许可证检查",
+      "cli": "bash",
+      "action": "command",
+      "command": "license-checker --summary",
+      "params": {},
+      "timeout": 60
+    }
+  ],
+  "output": {
+    "format": "json",
+    "merge_strategy": "shallow"
+  }
+}

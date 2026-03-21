@@ -1,0 +1,17 @@
+apiVersion: v2
+name: claude-pipeline
+description: A Helm chart for Claude Code CLI Pipeline Service
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - claude
+  - cli
+  - pipeline
+  - orchestration
+home: https://github.com/HOA233/claude-code-pipeline
+sources:
+  - https://github.com/HOA233/claude-code-pipeline
+maintainers:
+  - name: HOA233
+    email: hongrongtao233@gmail.com

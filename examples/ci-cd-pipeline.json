@@ -1,0 +1,100 @@
+{
+  "name": "ci-cd-pipeline",
+  "description": "CI/CD 流水线 - 代码检查、构建、部署",
+  "mode": "serial",
+  "steps": [
+    {
+      "id": "install-deps",
+      "name": "安装依赖",
+      "cli": "npm",
+      "action": "install",
+      "params": {
+        "ci": true
+      },
+      "timeout": 300
+    },
+    {
+      "id": "lint",
+      "name": "代码检查",
+      "cli": "npm",
+      "action": "run",
+      "command": "lint",
+      "params": {},
+      "depends_on": ["install-deps"],
+      "timeout": 120
+    },
+    {
+      "id": "type-check",
+      "name": "类型检查",
+      "cli": "npm",
+      "action": "run",
+      "command": "type-check",
+      "params": {},
+      "depends_on": ["install-deps"],
+      "timeout": 120
+    },
+    {
+      "id": "unit-tests",
+      "name": "单元测试",
+      "cli": "npm",
+      "action": "test",
+      "params": {
+        "coverage": true
+      },
+      "depends_on": ["lint", "type-check"],
+      "timeout": 300
+    },
+    {
+      "id": "build",
+      "name": "构建",
+      "cli": "npm",
+      "action": "run",
+      "command": "build",
+      "params": {},
+      "depends_on": ["unit-tests"],
+      "timeout": 300
+    },
+    {
+      "id": "docker-build",
+      "name": "Docker 构建",
+      "cli": "docker",
+      "action": "build",
+      "params": {
+        "tag": "{{env.IMAGE_TAG}}",
+        "file": "Dockerfile"
+      },
+      "depends_on": ["build"],
+      "timeout": 600
+    },
+    {
+      "id": "deploy-staging",
+      "name": "部署到 Staging",
+      "cli": "kubectl",
+      "action": "apply",
+      "params": {
+        "namespace": "staging",
+        "file": "deploy/k8s/"
+      },
+      "depends_on": ["docker-build"],
+      "condition": "{{env.BRANCH}} == 'develop'",
+      "timeout": 120
+    },
+    {
+      "id": "deploy-prod",
+      "name": "部署到生产环境",
+      "cli": "kubectl",
+      "action": "apply",
+      "params": {
+        "namespace": "production",
+        "file": "deploy/k8s/"
+      },
+      "depends_on": ["docker-build"],
+      "condition": "{{env.BRANCH}} == 'main'",
+      "timeout": 120
+    }
+  ],
+  "error_handling": {
+    "retry": 2,
+    "on_failure": "rollback"
+  }
+}

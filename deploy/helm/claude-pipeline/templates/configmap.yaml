@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "claude-pipeline.fullname" . }}
+  labels:
+    {{- include "claude-pipeline.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    server:
+      port: {{ .Values.config.server.port }}
+      read_timeout: {{ .Values.config.server.readTimeout }}
+      write_timeout: {{ .Values.config.server.writeTimeout }}
+    redis:
+      addr: {{ if .Values.redis.enabled }}{{ include "claude-pipeline.fullname" . }}-redis:6379{{ else }}{{ .Values.externalRedis.addr }}{{ end }}
+      db: 0
+    cli:
+      max_concurrency: {{ .Values.config.cli.maxConcurrency }}
+      default_timeout: {{ .Values.config.cli.defaultTimeout }}
+    log:
+      level: info

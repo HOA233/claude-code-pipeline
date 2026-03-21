@@ -1,0 +1,85 @@
+{
+  "name": "full-code-review",
+  "description": "完整的代码审查流程 - 包含代码分析、安全扫描、测试生成",
+  "mode": "hybrid",
+  "steps": [
+    {
+      "id": "analyze",
+      "name": "代码分析",
+      "cli": "claude",
+      "action": "analyze",
+      "params": {
+        "target": "src/",
+        "depth": "standard"
+      },
+      "on_error": "stop",
+      "timeout": 300
+    },
+    {
+      "id": "security-scan",
+      "name": "安全扫描",
+      "cli": "claude",
+      "action": "review",
+      "params": {
+        "target": "src/",
+        "type": "security"
+      },
+      "depends_on": ["analyze"],
+      "timeout": 180
+    },
+    {
+      "id": "style-check",
+      "name": "代码风格检查",
+      "cli": "claude",
+      "action": "review",
+      "params": {
+        "target": "src/",
+        "type": "style"
+      },
+      "depends_on": ["analyze"],
+      "timeout": 180
+    },
+    {
+      "id": "test-gen",
+      "name": "测试生成",
+      "cli": "claude",
+      "action": "generate-tests",
+      "params": {
+        "source": "src/",
+        "framework": "jest"
+      },
+      "depends_on": ["analyze"],
+      "timeout": 300
+    },
+    {
+      "id": "run-tests",
+      "name": "运行测试",
+      "cli": "npm",
+      "action": "test",
+      "params": {},
+      "depends_on": ["test-gen"],
+      "timeout": 120
+    },
+    {
+      "id": "generate-report",
+      "name": "生成报告",
+      "cli": "claude",
+      "action": "report",
+      "params": {
+        "format": "markdown"
+      },
+      "depends_on": ["security-scan", "style-check", "run-tests"],
+      "timeout": 60
+    }
+  ],
+  "error_handling": {
+    "retry": 1,
+    "on_failure": "notify",
+    "webhook": "https://hooks.example.com/pipeline-failed"
+  },
+  "output": {
+    "format": "json",
+    "merge_strategy": "deep",
+    "save_path": "/reports/{{pipeline_id}}/{{run_id}}.json"
+  }
+}
