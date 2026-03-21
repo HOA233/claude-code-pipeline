@@ -555,3 +555,33 @@ func (r *RedisClient) ListBatchKeys(ctx context.Context) ([]string, error) {
 	}
 	return result, nil
 }
+
+// ==================== Workspace Storage ====================
+
+const workspacePrefix = "workspace:"
+
+func (r *RedisClient) SaveWorkspace(ctx context.Context, workspaceID string, data []byte) error {
+	return r.client.Set(ctx, workspacePrefix+workspaceID, data, 0).Err()
+}
+
+func (r *RedisClient) GetWorkspace(ctx context.Context, workspaceID string) ([]byte, error) {
+	return r.client.Get(ctx, workspacePrefix+workspaceID).Bytes()
+}
+
+func (r *RedisClient) DeleteWorkspace(ctx context.Context, workspaceID string) error {
+	return r.client.Del(ctx, workspacePrefix+workspaceID).Err()
+}
+
+func (r *RedisClient) ListWorkspaceKeys(ctx context.Context) ([]string, error) {
+	keys, err := r.client.Keys(ctx, workspacePrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	// Strip prefix
+	result := make([]string, 0, len(keys))
+	for _, key := range keys {
+		result = append(result, key[len(workspacePrefix):])
+	}
+	return result, nil
+}

@@ -1,0 +1,35 @@
+{
+  "name": "quickstart-example",
+  "description": "A simple example pipeline to get started",
+  "mode": "serial",
+  "steps": [
+    {
+      "id": "check-code",
+      "name": "Check Code Quality",
+      "cli": "claude",
+      "action": "review",
+      "params": {
+        "target": "src/",
+        "depth": "quick"
+      },
+      "timeout": 300
+    },
+    {
+      "id": "run-tests",
+      "name": "Run Tests",
+      "cli": "npm",
+      "command": "test",
+      "params": {},
+      "depends_on": ["check-code"],
+      "timeout": 120
+    }
+  ],
+  "error_handling": {
+    "retry": 1,
+    "on_failure": "notify"
+  },
+  "output": {
+    "format": "json",
+    "merge_strategy": "shallow"
+  }
+}
