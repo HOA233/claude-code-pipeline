@@ -1,0 +1,104 @@
+.error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  background: #0a0a0a;
+}
+
+.error-boundary-content {
+  max-width: 500px;
+  text-align: center;
+}
+
+.error-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+}
+
+.error-boundary h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 12px;
+}
+
+.error-message {
+  font-size: 14px;
+  color: #888;
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.error-details {
+  text-align: left;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.error-details summary {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #888;
+  user-select: none;
+}
+
+.error-details summary:hover {
+  background: #222;
+}
+
+.error-details pre {
+  margin: 0;
+  padding: 16px;
+  font-size: 12px;
+  color: #EF4444;
+  background: #0a0a0a;
+  overflow-x: auto;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.error-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #D97706 0%, #EA580C 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.btn-secondary {
+  background: #1a1a1a;
+  color: #888;
+  border: 1px solid #333;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #222;
+  color: #fff;
+  border-color: #444;
+}
