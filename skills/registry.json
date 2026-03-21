@@ -1,0 +1,24 @@
+{
+  "version": "2.0",
+  "last_updated": "2024-03-22T00:00:00Z",
+  "skills": [
+    {
+      "id": "code-review",
+      "path": "skills/code-review",
+      "enabled": true,
+      "tags": ["quality", "security", "performance"]
+    },
+    {
+      "id": "deploy",
+      "path": "skills/deploy",
+      "enabled": true,
+      "tags": ["devops", "automation"]
+    },
+    {
+      "id": "test-gen",
+      "path": "skills/test-gen",
+      "enabled": true,
+      "tags": ["testing", "automation"]
+    }
+  ]
+}
