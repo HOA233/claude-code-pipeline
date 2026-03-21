@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# CI/CD
+.github/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts
+bin/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test files
+tests/
+*_test.go
+coverage.out
+coverage.html
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Local config
+.env
+.env.local
+*.local
+
+# Claude
+.claude/
