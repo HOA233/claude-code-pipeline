@@ -544,6 +544,123 @@ paths:
                     type: string
                     example: ok
 
+  /ready:
+    get:
+      tags: [Health]
+      summary: Readiness check endpoint
+      operationId: readyCheck
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                    example: true
+
+  /live:
+    get:
+      tags: [Health]
+      summary: Liveness check endpoint
+      operationId: liveCheck
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alive:
+                    type: boolean
+                    example: true
+
+x-websocket-endpoints:
+  /ws:
+    description: Global WebSocket endpoint for system-wide updates
+    protocols:
+      - websocket
+    messages:
+      system:stats:
+        description: Periodic system statistics
+        payload:
+          type: object
+          properties:
+            type:
+              type: string
+              example: system:stats
+            data:
+              type: object
+              properties:
+                task_queue_length:
+                  type: integer
+                run_queue_length:
+                  type: integer
+
+  /ws/tasks/{id}:
+    description: WebSocket endpoint for real-time task updates
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    messages:
+      task:status:
+        description: Task status change
+      task:output:
+        description: Task output chunk
+      task:completed:
+        description: Task completion notification
+      task:failed:
+        description: Task failure notification
+
+  /ws/runs/{id}:
+    description: WebSocket endpoint for real-time run updates
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    messages:
+      run:status:
+        description: Run status change
+      run:step:
+        description: Step execution update
+      run:completed:
+        description: Run completion notification
+      run:failed:
+        description: Run failure notification
+
+x-sse-endpoints:
+  /sse:
+    description: Server-Sent Events endpoint for global system updates
+    events:
+      system:stats:
+        description: Periodic system statistics (every 5 seconds)
+
+  /sse/tasks/{id}:
+    description: SSE endpoint for real-time task updates
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+  /sse/runs/{id}:
+    description: SSE endpoint for real-time run updates
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
 components:
   schemas:
     Skill:

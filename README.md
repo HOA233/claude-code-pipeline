@@ -68,6 +68,44 @@ curl -X POST http://localhost:8080/api/pipelines \
 | `/api/runs` | GET | 所有执行记录 |
 | `/api/runs/:id` | GET | 执行详情 |
 
+## 实时更新
+
+服务支持 WebSocket 和 Server-Sent Events (SSE) 用于实时状态更新。
+
+### WebSocket 端点
+
+| 端点 | 说明 |
+|------|------|
+| `/ws` | 全局系统更新 |
+| `/ws/tasks/:id` | 任务状态更新 |
+| `/ws/runs/:id` | 执行状态更新 |
+
+### SSE 端点
+
+| 端点 | 说明 |
+|------|------|
+| `/sse` | 全局系统统计 (每5秒) |
+| `/sse/tasks/:id` | 任务状态更新 |
+| `/sse/runs/:id` | 执行状态更新 |
+
+### 使用示例
+
+```javascript
+// WebSocket 连接
+const ws = new WebSocket('ws://localhost:8080/ws/tasks/task-123');
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Task update:', data);
+};
+
+// SSE 连接
+const eventSource = new EventSource('http://localhost:8080/sse/tasks/task-123');
+eventSource.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Task update:', data);
+};
+```
+
 ## Pipeline 配置示例
 
 ```yaml
