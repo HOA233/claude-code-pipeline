@@ -1,11 +1,16 @@
 package api
 
 import (
+	"github.com/company/claude-pipeline/internal/repository"
 	"github.com/company/claude-pipeline/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator) {
+func SetupRoutes(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient) {
+	// Initialize WebSocket handlers
+	wsHandler := NewWebSocketHandler(redis)
+	sseHandler := NewSSEHandler(redis)
+
 	api := r.Group("/api")
 	{
 		// Skills
@@ -32,19 +37,25 @@ func SetupRoutes(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service
 		api.GET("/runs/:id", GetRun(orch))
 		api.DELETE("/runs/:id", CancelRun(orch))
 
-		// WebSocket
-		api.GET("/ws/tasks/:id/output", TaskOutputWS(taskSvc))
-		api.GET("/ws/runs/:id/output", RunOutputWS(orch))
-
 		// Status
 		api.GET("/status", GetStatus(executor, skillSvc, orch))
 	}
+
+	// WebSocket endpoints (outside /api for easier client connection)
+	r.GET("/ws/tasks/:id", wsHandler.HandleTaskWS)
+	r.GET("/ws/runs/:id", wsHandler.HandleRunWS)
+	r.GET("/ws", wsHandler.HandleGlobalWS)
+
+	// SSE endpoints (alternative to WebSocket)
+	r.GET("/sse/tasks/:id", sseHandler.HandleTaskSSE)
+	r.GET("/sse/runs/:id", sseHandler.HandleRunSSE)
+	r.GET("/sse", sseHandler.HandleGlobalSSE)
 }
 
 // SetupRoutesWithScheduler sets up routes including scheduler endpoints
-func SetupRoutesWithScheduler(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, schedulerSvc *service.SchedulerService) {
+func SetupRoutesWithScheduler(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, schedulerSvc *service.SchedulerService) {
 	// Set up base routes
-	SetupRoutes(r, skillSvc, taskSvc, executor, orch)
+	SetupRoutes(r, skillSvc, taskSvc, executor, orch, redis)
 
 	// Add scheduler routes
 	api := r.Group("/api")
