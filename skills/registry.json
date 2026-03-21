@@ -31,6 +31,18 @@
       "path": "skills/docs-gen",
       "enabled": true,
       "tags": ["documentation", "automation"]
+    },
+    {
+      "id": "security-scan",
+      "path": "skills/security-scan",
+      "enabled": true,
+      "tags": ["security", "compliance", "owasp"]
+    },
+    {
+      "id": "performance",
+      "path": "skills/performance",
+      "enabled": true,
+      "tags": ["performance", "optimization", "profiling"]
     }
   ]
 }

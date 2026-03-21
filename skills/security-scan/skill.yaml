@@ -1,0 +1,94 @@
+id: security-scan
+name: Security Scan
+description: Scans code for security vulnerabilities and compliance issues
+version: "1.0.0"
+category: security
+tags:
+  - security
+  - vulnerability
+  - compliance
+  - owasp
+
+parameters:
+  - name: target
+    type: string
+    required: true
+    description: Target path to scan (file or directory)
+
+  - name: severity
+    type: enum
+    values:
+      - critical
+      - high
+      - medium
+      - low
+      - all
+    default: all
+    description: Minimum severity level to report
+
+  - name: format
+    type: enum
+    values:
+      - json
+      - sarif
+      - html
+    default: json
+    description: Output format for the scan results
+
+  - name: rules
+    type: array
+    required: false
+    description: Custom rules to apply (optional)
+
+  - name: exclude
+    type: array
+    required: false
+    description: Paths to exclude from scanning
+
+cli:
+  command: claude
+  args:
+    - --model
+    - claude-sonnet-4-6
+    - --max-tokens
+    - "8192"
+    - --output-format
+    - json
+
+timeout: 600
+
+output:
+  format: json
+  schema:
+    vulnerabilities:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          severity:
+            type: string
+          title:
+            type: string
+          description:
+            type: string
+          location:
+            type: object
+          remediation:
+            type: string
+    summary:
+      type: object
+      properties:
+        total:
+          type: integer
+        critical:
+          type: integer
+        high:
+          type: integer
+        medium:
+          type: integer
+        low:
+          type: integer
+        compliance_score:
+          type: number
