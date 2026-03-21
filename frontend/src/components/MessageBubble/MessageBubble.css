@@ -1,0 +1,108 @@
+.message-bubble {
+  display: flex;
+  gap: 12px;
+  padding: 16px 0;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+}
+
+.message-bubble.assistant .message-avatar {
+  background: linear-gradient(135deg, #D97706 0%, #EA580C 100%);
+}
+
+.message-bubble.user .message-avatar {
+  background: #333;
+}
+
+.avatar-icon {
+  font-size: 18px;
+  color: #fff;
+}
+
+.avatar-icon.user {
+  font-size: 16px;
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.message-sender {
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+}
+
+.message-time {
+  font-size: 12px;
+  color: #666;
+}
+
+.message-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #d4d4d4;
+}
+
+.message-body p {
+  margin: 0 0 12px;
+}
+
+.message-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Code blocks in messages */
+.message-body pre {
+  background: #0a0a0a;
+  border-radius: 8px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+}
+
+.message-body code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: rgba(217, 119, 6, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #D97706;
+}
+
+.message-body pre code {
+  background: none;
+  padding: 0;
+  color: #d4d4d4;
+}
