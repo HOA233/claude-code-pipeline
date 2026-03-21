@@ -40,3 +40,23 @@ func SetupRoutes(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service
 		api.GET("/status", GetStatus(executor, skillSvc, orch))
 	}
 }
+
+// SetupRoutesWithScheduler sets up routes including scheduler endpoints
+func SetupRoutesWithScheduler(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, schedulerSvc *service.SchedulerService) {
+	// Set up base routes
+	SetupRoutes(r, skillSvc, taskSvc, executor, orch)
+
+	// Add scheduler routes
+	api := r.Group("/api")
+	{
+		// Schedules
+		api.GET("/schedules", ListSchedules(schedulerSvc))
+		api.POST("/schedules", CreateSchedule(schedulerSvc))
+		api.GET("/schedules/:id", GetSchedule(schedulerSvc))
+		api.PUT("/schedules/:id", UpdateSchedule(schedulerSvc))
+		api.DELETE("/schedules/:id", DeleteSchedule(schedulerSvc))
+		api.POST("/schedules/:id/enable", EnableSchedule(schedulerSvc))
+		api.POST("/schedules/:id/disable", DisableSchedule(schedulerSvc))
+		api.POST("/schedules/:id/trigger", TriggerSchedule(schedulerSvc))
+	}
+}

@@ -35,6 +35,12 @@ tags:
     description: Multi-CLI orchestration
   - name: Runs
     description: Pipeline execution management
+  - name: Schedules
+    description: Scheduled task management
+  - name: Status
+    description: Service status endpoints
+  - name: Health
+    description: Health check endpoints
 
 paths:
   /skills:
@@ -351,6 +357,163 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /schedules:
+    get:
+      tags: [Schedules]
+      summary: List all scheduled tasks
+      operationId: listSchedules
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schedules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Schedule'
+    post:
+      tags: [Schedules]
+      summary: Create a new scheduled task
+      operationId: createSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreateRequest'
+      responses:
+        '201':
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /schedules/{id}:
+    get:
+      tags: [Schedules]
+      summary: Get schedule details
+      operationId: getSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Schedules]
+      summary: Update a schedule
+      operationId: updateSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Schedule updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Schedules]
+      summary: Delete a schedule
+      operationId: deleteSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Schedule deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schedules/{id}/enable:
+    post:
+      tags: [Schedules]
+      summary: Enable a schedule
+      operationId: enableSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Schedule enabled
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schedules/{id}/disable:
+    post:
+      tags: [Schedules]
+      summary: Disable a schedule
+      operationId: disableSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Schedule disabled
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /schedules/{id}/trigger:
+    post:
+      tags: [Schedules]
+      summary: Manually trigger a scheduled task
+      operationId: triggerSchedule
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Task triggered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  triggered:
+                    type: boolean
+                  task:
+                    $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /status:
     get:
       tags: [Status]
@@ -659,6 +822,87 @@ components:
           properties:
             loaded:
               type: integer
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          example: schedule-abc123
+        name:
+          type: string
+          example: daily-code-review
+        skill_id:
+          type: string
+          example: code-review
+        parameters:
+          type: object
+          example:
+            target: src/
+            depth: quick
+        cron_expr:
+          type: string
+          example: "@daily"
+          description: Cron expression for scheduling (@hourly, @daily, @weekly, or custom)
+        enabled:
+          type: boolean
+        last_run:
+          type: string
+          format: date-time
+        next_run:
+          type: string
+          format: date-time
+        run_count:
+          type: integer
+        max_runs:
+          type: integer
+          description: Maximum number of runs (0 = unlimited)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        notify_on_fail:
+          type: boolean
+        webhook_url:
+          type: string
+          format: uri
+
+    ScheduleCreateRequest:
+      type: object
+      required:
+        - skill_id
+        - cron_expr
+      properties:
+        name:
+          type: string
+          description: Human-readable name for the schedule
+        skill_id:
+          type: string
+          description: ID of the skill to execute
+        parameters:
+          type: object
+          description: Parameters to pass to the skill
+        cron_expr:
+          type: string
+          description: Cron expression (@hourly, @daily, @weekly)
+        max_runs:
+          type: integer
+          description: Maximum number of runs
+        tags:
+          type: array
+          items:
+            type: string
+        notify_on_fail:
+          type: boolean
+        webhook_url:
+          type: string
+          format: uri
 
   responses:
     BadRequest:

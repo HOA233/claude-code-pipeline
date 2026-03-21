@@ -307,3 +307,71 @@ func (r *RedisClient) PublishRunUpdate(ctx context.Context, runID string, data i
 func (r *RedisClient) SubscribeRunUpdates(ctx context.Context, runID string) *redis.PubSub {
 	return r.client.Subscribe(ctx, "run:updates:"+runID)
 }
+
+// ==================== Schedule Storage ====================
+
+const scheduleKeyPrefix = "schedule:"
+
+func (r *RedisClient) SaveSchedule(ctx context.Context, scheduleID string, data []byte) error {
+	return r.client.Set(ctx, scheduleKeyPrefix+scheduleID, data, 0).Err()
+}
+
+func (r *RedisClient) GetSchedule(ctx context.Context, scheduleID string) ([]byte, error) {
+	return r.client.Get(ctx, scheduleKeyPrefix+scheduleID).Bytes()
+}
+
+func (r *RedisClient) DeleteSchedule(ctx context.Context, scheduleID string) error {
+	return r.client.Del(ctx, scheduleKeyPrefix+scheduleID).Err()
+}
+
+func (r *RedisClient) ListScheduleKeys(ctx context.Context) ([]string, error) {
+	keys, err := r.client.Keys(ctx, scheduleKeyPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	// Strip prefix
+	result := make([]string, 0, len(keys))
+	for _, key := range keys {
+		result = append(result, key[len(scheduleKeyPrefix):])
+	}
+	return result, nil
+}
+
+// ==================== Cache Storage ====================
+
+func (r *RedisClient) SetCache(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	return r.client.Set(ctx, "cache:"+key, value, ttl).Err()
+}
+
+func (r *RedisClient) GetCache(ctx context.Context, key string) ([]byte, error) {
+	return r.client.Get(ctx, "cache:"+key).Bytes()
+}
+
+func (r *RedisClient) DeleteCache(ctx context.Context, key string) error {
+	return r.client.Del(ctx, "cache:"+key).Err()
+}
+
+// ==================== Rate Limiting ====================
+
+func (r *RedisClient) IncrementRateLimit(ctx context.Context, key string, window time.Duration) (int, error) {
+	val, err := r.client.Incr(ctx, "ratelimit:"+key).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	// Set expiry on first increment
+	if val == 1 {
+		r.client.Expire(ctx, "ratelimit:"+key, window)
+	}
+
+	return int(val), nil
+}
+
+func (r *RedisClient) GetRateLimit(key string) (int, error) {
+	val, err := r.client.Get(ctx, "ratelimit:"+key).Int()
+	if err == redis.Nil {
+		return 0, nil
+	}
+	return val, err
+}
