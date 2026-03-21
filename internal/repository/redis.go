@@ -151,6 +151,10 @@ func (r *RedisClient) PopTaskQueue(ctx context.Context) (string, error) {
 	return result, err
 }
 
+func (r *RedisClient) GetQueueLength(ctx context.Context) (int, error) {
+	return int(r.client.LLen(ctx, taskQueueKey).Val()), nil
+}
+
 // ==================== Process Status ====================
 
 const processKeyPrefix = "process:"
@@ -294,6 +298,10 @@ func (r *RedisClient) PopRunQueue(ctx context.Context) (string, error) {
 	return result, err
 }
 
+func (r *RedisClient) GetRunQueueLength(ctx context.Context) (int, error) {
+	return int(r.client.LLen(ctx, runQueueKey).Val()), nil
+}
+
 // ==================== Run Pub/Sub ====================
 
 func (r *RedisClient) PublishRunUpdate(ctx context.Context, runID string, data interface{}) error {
@@ -374,4 +382,176 @@ func (r *RedisClient) GetRateLimit(key string) (int, error) {
 		return 0, nil
 	}
 	return val, err
+}
+
+// ==================== Priority Queue ====================
+
+const priorityQueuePrefix = "priorityqueue:"
+
+func (r *RedisClient) PushPriorityQueue(ctx context.Context, queueName string, taskID string, score float64) error {
+	return r.client.ZAdd(ctx, priorityQueuePrefix+queueName, redis.Z{Score: score, Member: taskID}).Err()
+}
+
+func (r *RedisClient) PopPriorityQueue(ctx context.Context, queueName string) (string, error) {
+	// Get and remove the highest priority (lowest score) item
+	result, err := r.client.ZPopMin(ctx, priorityQueuePrefix+queueName, 1).Result()
+	if err == redis.Nil || len(result) == 0 {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return result[0].Member.(string), nil
+}
+
+func (r *RedisClient) PeekPriorityQueue(ctx context.Context, queueName string) (string, error) {
+	result, err := r.client.ZRange(ctx, priorityQueuePrefix+queueName, 0, 0).Result()
+	if err != nil {
+		return "", err
+	}
+	if len(result) == 0 {
+		return "", nil
+	}
+	return result[0], nil
+}
+
+func (r *RedisClient) GetPriorityQueueLength(ctx context.Context, queueName string) (int, error) {
+	return int(r.client.ZCard(ctx, priorityQueuePrefix+queueName).Val()), nil
+}
+
+func (r *RedisClient) RemoveFromPriorityQueue(ctx context.Context, queueName string, taskID string) error {
+	return r.client.ZRem(ctx, priorityQueuePrefix+queueName, taskID).Err()
+}
+
+func (r *RedisClient) ClearPriorityQueue(ctx context.Context, queueName string) error {
+	return r.client.Del(ctx, priorityQueuePrefix+queueName).Err()
+}
+
+func (r *RedisClient) GetPriorityQueueItems(ctx context.Context, queueName string, start, stop int64) ([]string, error) {
+	return r.client.ZRange(ctx, priorityQueuePrefix+queueName, start, stop).Result()
+}
+
+// ==================== Task Priority Metadata ====================
+
+const taskPriorityPrefix = "taskpriority:"
+
+func (r *RedisClient) SetTaskPriority(ctx context.Context, taskID string, data []byte) error {
+	return r.client.Set(ctx, taskPriorityPrefix+taskID, data, 24*time.Hour).Err()
+}
+
+func (r *RedisClient) GetTaskPriority(ctx context.Context, taskID string) ([]byte, error) {
+	return r.client.Get(ctx, taskPriorityPrefix+taskID).Bytes()
+}
+
+func (r *RedisClient) DeleteTaskPriority(ctx context.Context, taskID string) error {
+	return r.client.Del(ctx, taskPriorityPrefix+taskID).Err()
+}
+
+// ==================== Task History/Archive ====================
+
+const taskHistoryPrefix = "taskhistory:"
+
+func (r *RedisClient) ArchiveTask(ctx context.Context, task *model.Task) error {
+	data, err := json.Marshal(task)
+	if err != nil {
+		return err
+	}
+	// Store with 7 day TTL for archived tasks
+	return r.client.Set(ctx, taskHistoryPrefix+task.ID, data, 7*24*time.Hour).Err()
+}
+
+func (r *RedisClient) GetArchivedTask(ctx context.Context, taskID string) (*model.Task, error) {
+	data, err := r.client.Get(ctx, taskHistoryPrefix+taskID).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	var task model.Task
+	if err := json.Unmarshal(data, &task); err != nil {
+		return nil, err
+	}
+	return &task, nil
+}
+
+func (r *RedisClient) ListArchivedTasks(ctx context.Context, limit int) ([]*model.Task, error) {
+	keys, err := r.client.Keys(ctx, taskHistoryPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	if limit > 0 && len(keys) > limit {
+		keys = keys[:limit]
+	}
+
+	tasks := make([]*model.Task, 0, len(keys))
+	for _, key := range keys {
+		data, err := r.client.Get(ctx, key).Bytes()
+		if err != nil {
+			continue
+		}
+		var task model.Task
+		if err := json.Unmarshal(data, &task); err != nil {
+			continue
+		}
+		tasks = append(tasks, &task)
+	}
+	return tasks, nil
+}
+
+// ==================== Statistics ====================
+
+func (r *RedisClient) IncrementCounter(ctx context.Context, key string) error {
+	return r.client.Incr(ctx, "stats:"+key).Err()
+}
+
+func (r *RedisClient) GetCounter(ctx context.Context, key string) (int64, error) {
+	return r.client.Get(ctx, "stats:"+key).Int64()
+}
+
+func (r *RedisClient) RecordMetric(ctx context.Context, key string, value float64) error {
+	return r.client.RPush(ctx, "metrics:"+key, value).Err()
+}
+
+func (r *RedisClient) GetMetrics(ctx context.Context, key string, start, stop int64) ([]float64, error) {
+	result, err := r.client.LRange(ctx, "metrics:"+key, start, stop).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	metrics := make([]float64, 0, len(result))
+	for _, s := range result {
+		var f float64
+		fmt.Sscanf(s, "%f", &f)
+		metrics = append(metrics, f)
+	}
+	return metrics, nil
+}
+
+// ==================== Batch Storage ====================
+
+const batchPrefix = "batch:"
+
+func (r *RedisClient) SaveBatch(ctx context.Context, batchID string, data []byte) error {
+	return r.client.Set(ctx, batchPrefix+batchID, data, 24*time.Hour).Err()
+}
+
+func (r *RedisClient) GetBatch(ctx context.Context, batchID string) ([]byte, error) {
+	return r.client.Get(ctx, batchPrefix+batchID).Bytes()
+}
+
+func (r *RedisClient) DeleteBatch(ctx context.Context, batchID string) error {
+	return r.client.Del(ctx, batchPrefix+batchID).Err()
+}
+
+func (r *RedisClient) ListBatchKeys(ctx context.Context) ([]string, error) {
+	keys, err := r.client.Keys(ctx, batchPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	// Strip prefix
+	result := make([]string, 0, len(keys))
+	for _, key := range keys {
+		result = append(result, key[len(batchPrefix):])
+	}
+	return result, nil
 }
