@@ -1,0 +1,175 @@
+version: "1.0"
+name: claude-pipeline
+description: Claude Code CLI Pipeline Service
+
+cli:
+  binary: pipeline-cli
+  default_url: http://localhost:8080
+
+commands:
+  skills:
+    description: Manage skills
+    subcommands:
+      list:
+        description: List all available skills
+        usage: pipeline-cli skills list
+      get:
+        description: Get skill details
+        usage: pipeline-cli skills get <id>
+        args:
+          - name: id
+            required: true
+            description: Skill ID
+      sync:
+        description: Sync skills from GitLab
+        usage: pipeline-cli skills sync
+
+  tasks:
+    description: Manage tasks
+    subcommands:
+      list:
+        description: List all tasks
+        usage: pipeline-cli tasks list
+      create:
+        description: Create a new task
+        usage: pipeline-cli tasks create
+        interactive: true
+      get:
+        description: Get task details
+        usage: pipeline-cli tasks get <id>
+        args:
+          - name: id
+            required: true
+            description: Task ID
+      result:
+        description: Get task result
+        usage: pipeline-cli tasks result <id>
+        args:
+          - name: id
+            required: true
+            description: Task ID
+      cancel:
+        description: Cancel a running task
+        usage: pipeline-cli tasks cancel <id>
+        args:
+          - name: id
+            required: true
+            description: Task ID
+
+  pipelines:
+    description: Manage pipelines
+    subcommands:
+      list:
+        description: List all pipelines
+        usage: pipeline-cli pipelines list
+      create:
+        description: Create a new pipeline from JSON
+        usage: pipeline-cli pipelines create < pipeline.json
+        stdin: true
+      get:
+        description: Get pipeline details
+        usage: pipeline-cli pipelines get <id>
+        args:
+          - name: id
+            required: true
+            description: Pipeline ID
+      run:
+        description: Execute a pipeline
+        usage: pipeline-cli pipelines run <id>
+        args:
+          - name: id
+            required: true
+            description: Pipeline ID
+      delete:
+        description: Delete a pipeline
+        usage: pipeline-cli pipelines delete <id>
+        args:
+          - name: id
+            required: true
+            description: Pipeline ID
+
+  runs:
+    description: View pipeline runs
+    subcommands:
+      list:
+        description: List all runs
+        usage: pipeline-cli runs list
+      get:
+        description: Get run details
+        usage: pipeline-cli runs get <id>
+        args:
+          - name: id
+            required: true
+            description: Run ID
+      cancel:
+        description: Cancel a running pipeline
+        usage: pipeline-cli runs cancel <id>
+        args:
+          - name: id
+            required: true
+            description: Run ID
+
+  schedules:
+    description: Manage scheduled tasks
+    subcommands:
+      list:
+        description: List all schedules
+        usage: pipeline-cli schedules list
+      create:
+        description: Create a new schedule
+        usage: pipeline-cli schedules create
+        interactive: true
+      get:
+        description: Get schedule details
+        usage: pipeline-cli schedules get <id>
+        args:
+          - name: id
+            required: true
+            description: Schedule ID
+      trigger:
+        description: Manually trigger a schedule
+        usage: pipeline-cli schedules trigger <id>
+        args:
+          - name: id
+            required: true
+            description: Schedule ID
+      enable:
+        description: Enable a schedule
+        usage: pipeline-cli schedules enable <id>
+        args:
+          - name: id
+            required: true
+            description: Schedule ID
+      disable:
+        description: Disable a schedule
+        usage: pipeline-cli schedules disable <id>
+        args:
+          - name: id
+            required: true
+            description: Schedule ID
+      delete:
+        description: Delete a schedule
+        usage: pipeline-cli schedules delete <id>
+        args:
+          - name: id
+            required: true
+            description: Schedule ID
+
+  status:
+    description: Show service status
+    usage: pipeline-cli status
+
+  version:
+    description: Show CLI version
+    usage: pipeline-cli version
+
+environment:
+  variables:
+    - name: PIPELINE_URL
+      description: API base URL
+      default: http://localhost:8080
+    - name: PIPELINE_API_KEY
+      description: API key for authentication
+    - name: PIPELINE_TIMEOUT
+      description: Request timeout in seconds
+      default: "30"
