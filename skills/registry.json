@@ -19,6 +19,18 @@
       "path": "skills/test-gen",
       "enabled": true,
       "tags": ["testing", "automation"]
+    },
+    {
+      "id": "refactor",
+      "path": "skills/refactor",
+      "enabled": true,
+      "tags": ["development", "quality"]
+    },
+    {
+      "id": "docs-gen",
+      "path": "skills/docs-gen",
+      "enabled": true,
+      "tags": ["documentation", "automation"]
     }
   ]
 }

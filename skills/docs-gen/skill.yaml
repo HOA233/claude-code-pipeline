@@ -1,0 +1,52 @@
+id: docs-gen
+name: 文档生成
+description: 自动生成 API 文档、README 和代码注释
+version: 1.0.0
+category: documentation
+author: team-ai
+
+# CLI 配置
+cli:
+  model: claude-sonnet-4-6
+  max_tokens: 8192
+  timeout: 600
+
+# 参数定义
+parameters:
+  - name: target
+    type: string
+    required: true
+    description: 文档生成目标路径
+
+  - name: type
+    type: enum
+    values: [api, readme, comments, all]
+    default: all
+    description: 文档类型
+
+  - name: format
+    type: enum
+    values: [markdown, html, openapi]
+    default: markdown
+    description: 输出格式
+
+  - name: include_examples
+    type: boolean
+    default: true
+    description: 是否包含示例代码
+
+  - name: language
+    type: enum
+    values: [zh, en]
+    default: zh
+    description: 文档语言
+
+# 权限要求
+permissions:
+  - read:repository
+  - write:docs
+
+# 输出配置
+output:
+  format: json
+  save_to: /docs/{{task_id}}/

@@ -1,0 +1,54 @@
+id: refactor
+name: 代码重构
+description: 智能重构代码结构，提升代码质量和可维护性
+version: 1.1.0
+category: development
+author: team-ai
+
+# CLI 配置
+cli:
+  model: claude-sonnet-4-6
+  max_tokens: 16384
+  timeout: 900
+
+# 参数定义
+parameters:
+  - name: target
+    type: string
+    required: true
+    description: 重构目标路径或文件
+    validation:
+      pattern: "^[a-zA-Z0-9/_.-]+$"
+
+  - name: type
+    type: enum
+    values: [extract-method, extract-class, rename, simplify, optimize, modernize]
+    default: optimize
+    description: 重构类型
+
+  - name: scope
+    type: enum
+    values: [file, module, project]
+    default: file
+    description: 重构范围
+
+  - name: preserve_behavior
+    type: boolean
+    default: true
+    description: 是否保持原有行为
+
+  - name: generate_tests
+    type: boolean
+    default: true
+    description: 是否为新代码生成测试
+
+# 权限要求
+permissions:
+  - read:repository
+  - write:code
+  - run:tests
+
+# 输出配置
+output:
+  format: json
+  save_to: /reports/{{task_id}}.json
