@@ -1,0 +1,22 @@
+server:
+  port: 8080
+  read_timeout: 30s
+  write_timeout: 30s
+
+redis:
+  addr: localhost:6379
+  password: ""
+  db: 0
+
+gitlab:
+  url: https://gitlab.company.com
+  token: ${GITLAB_TOKEN}
+  skills_repo: ai/claude-skills
+
+cli:
+  max_concurrency: 5
+  default_timeout: 600s
+  claude_path: claude
+
+log:
+  level: info

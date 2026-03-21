@@ -1,0 +1,36 @@
+id: test-gen
+name: 测试生成
+description: 自动生成单元测试
+version: 1.0.0
+category: testing
+author: team-ai
+
+cli:
+  model: claude-sonnet-4-6
+  max_tokens: 8192
+  timeout: 600
+
+parameters:
+  - name: source
+    type: string
+    required: true
+    description: 源代码路径
+
+  - name: framework
+    type: enum
+    values: [jest, pytest, go-test, junit]
+    default: jest
+    description: 测试框架
+
+  - name: coverage
+    type: boolean
+    default: true
+    description: 是否生成覆盖率报告
+
+permissions:
+  - read:repository
+  - write:test
+
+output:
+  format: markdown
+  save_to: /reports/{{task_id}}.md

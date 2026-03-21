@@ -1,0 +1,38 @@
+id: code-review
+name: 代码审查
+description: 分析代码质量，检测安全漏洞和性能问题
+version: 1.0.0
+category: quality
+author: team-ai
+
+cli:
+  model: claude-sonnet-4-6
+  max_tokens: 8192
+  timeout: 600
+
+parameters:
+  - name: target
+    type: string
+    required: true
+    description: 审查目标路径
+    validation:
+      pattern: "^[a-zA-Z0-9/_-]+$"
+
+  - name: depth
+    type: enum
+    values: [quick, standard, deep]
+    default: standard
+    description: 审查深度
+
+  - name: include_tests
+    type: boolean
+    default: false
+    description: 是否包含测试文件
+
+permissions:
+  - read:repository
+  - write:report
+
+output:
+  format: markdown
+  save_to: /reports/{{task_id}}.md

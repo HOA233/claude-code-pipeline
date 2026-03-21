@@ -1,0 +1,36 @@
+id: deploy
+name: 部署服务
+description: 自动化部署到指定环境
+version: 1.0.0
+category: devops
+author: team-ai
+
+cli:
+  model: claude-sonnet-4-6
+  max_tokens: 4096
+  timeout: 300
+
+parameters:
+  - name: environment
+    type: enum
+    values: [dev, staging, production]
+    required: true
+    description: 部署环境
+
+  - name: dry_run
+    type: boolean
+    default: true
+    description: 是否模拟执行
+
+  - name: services
+    type: string
+    required: false
+    description: 指定部署的服务（逗号分隔）
+
+permissions:
+  - read:repository
+  - write:deployment
+
+output:
+  format: json
+  save_to: /reports/{{task_id}}.json
