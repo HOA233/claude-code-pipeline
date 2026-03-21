@@ -1,0 +1,152 @@
+.task-page {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.task-page.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.task-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.skill-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(217, 119, 6, 0.1);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  padding: 8px 16px;
+  border-radius: 20px;
+  color: #D97706;
+}
+
+.skill-icon {
+  font-size: 18px;
+}
+
+.task-content {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 16px;
+  padding: 32px;
+}
+
+.task-form {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.form-section h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.section-description {
+  color: #888;
+  margin: 0 0 24px;
+  font-size: 14px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid #333;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #D97706 0%, #EA580C 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #1a1a1a;
+  color: #888;
+  border: 1px solid #333;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #222;
+  color: #fff;
+}
+
+.skill-selector {
+  text-align: center;
+  padding: 48px 24px;
+}
+
+.skill-selector h2 {
+  margin: 0 0 12px;
+}
+
+.skill-selector p {
+  color: #888;
+  margin: 0 0 24px;
+}
+
+.task-output {
+  margin-top: 32px;
+}
+
+.task-output h2 {
+  font-size: 18px;
+  margin: 0 0 16px;
+}
+
+@media (max-width: 768px) {
+  .task-page {
+    padding: 16px;
+  }
+
+  .task-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .task-content {
+    padding: 20px;
+  }
+}
