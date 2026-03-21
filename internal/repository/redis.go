@@ -180,3 +180,130 @@ func (r *RedisClient) PublishTaskUpdate(ctx context.Context, taskID string, data
 func (r *RedisClient) SubscribeTaskUpdates(ctx context.Context, taskID string) *redis.PubSub {
 	return r.client.Subscribe(ctx, "task:updates:"+taskID)
 }
+
+// ==================== Pipeline Storage ====================
+
+const pipelineKeyPrefix = "pipeline:"
+
+func (r *RedisClient) SavePipeline(ctx context.Context, pipeline *model.Pipeline) error {
+	data, err := json.Marshal(pipeline)
+	if err != nil {
+		return err
+	}
+	return r.client.Set(ctx, pipelineKeyPrefix+pipeline.ID, data, 0).Err()
+}
+
+func (r *RedisClient) GetPipeline(ctx context.Context, pipelineID string) (*model.Pipeline, error) {
+	data, err := r.client.Get(ctx, pipelineKeyPrefix+pipelineID).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	var pipeline model.Pipeline
+	if err := json.Unmarshal(data, &pipeline); err != nil {
+		return nil, err
+	}
+	return &pipeline, nil
+}
+
+func (r *RedisClient) GetAllPipelines(ctx context.Context) ([]*model.Pipeline, error) {
+	keys, err := r.client.Keys(ctx, pipelineKeyPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	pipelines := make([]*model.Pipeline, 0, len(keys))
+	for _, key := range keys {
+		data, err := r.client.Get(ctx, key).Bytes()
+		if err != nil {
+			continue
+		}
+		var pipeline model.Pipeline
+		if err := json.Unmarshal(data, &pipeline); err != nil {
+			continue
+		}
+		pipelines = append(pipelines, &pipeline)
+	}
+	return pipelines, nil
+}
+
+func (r *RedisClient) DeletePipeline(ctx context.Context, pipelineID string) error {
+	return r.client.Del(ctx, pipelineKeyPrefix+pipelineID).Err()
+}
+
+// ==================== Run Storage ====================
+
+const runKeyPrefix = "run:"
+
+func (r *RedisClient) SaveRun(ctx context.Context, run *model.Run) error {
+	data, err := json.Marshal(run)
+	if err != nil {
+		return err
+	}
+	return r.client.Set(ctx, runKeyPrefix+run.ID, data, 24*time.Hour).Err()
+}
+
+func (r *RedisClient) GetRun(ctx context.Context, runID string) (*model.Run, error) {
+	data, err := r.client.Get(ctx, runKeyPrefix+runID).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	var run model.Run
+	if err := json.Unmarshal(data, &run); err != nil {
+		return nil, err
+	}
+	return &run, nil
+}
+
+func (r *RedisClient) GetAllRuns(ctx context.Context) ([]*model.Run, error) {
+	keys, err := r.client.Keys(ctx, runKeyPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	runs := make([]*model.Run, 0, len(keys))
+	for _, key := range keys {
+		if len(key) > len(runKeyPrefix)+12 && key[len(runKeyPrefix)+12] == ':' {
+			continue
+		}
+		data, err := r.client.Get(ctx, key).Bytes()
+		if err != nil {
+			continue
+		}
+		var run model.Run
+		if err := json.Unmarshal(data, &run); err != nil {
+			continue
+		}
+		runs = append(runs, &run)
+	}
+	return runs, nil
+}
+
+// ==================== Run Queue ====================
+
+const runQueueKey = "run:queue"
+
+func (r *RedisClient) PushRunQueue(ctx context.Context, runID string) error {
+	return r.client.RPush(ctx, runQueueKey, runID).Err()
+}
+
+func (r *RedisClient) PopRunQueue(ctx context.Context) (string, error) {
+	result, err := r.client.LPop(ctx, runQueueKey).Result()
+	if err == redis.Nil {
+		return "", nil
+	}
+	return result, err
+}
+
+// ==================== Run Pub/Sub ====================
+
+func (r *RedisClient) PublishRunUpdate(ctx context.Context, runID string, data interface{}) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return r.client.Publish(ctx, "run:updates:"+runID, jsonData).Err()
+}
+
+func (r *RedisClient) SubscribeRunUpdates(ctx context.Context, runID string) *redis.PubSub {
+	return r.client.Subscribe(ctx, "run:updates:"+runID)
+}

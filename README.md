@@ -1,158 +1,143 @@
-# Claude Code CLI Pipeline Service
+# Claude CLI Orchestration Service
 
-A Golang-based pipeline service that allows users to select different skills to run Claude Code CLI. All CLI instances run in the same service but execute different tasks based on skill selection.
+一个 CLI 编排服务，可以将多个 CLI 实例组合成流水线协同工作。
 
-## Features
+## 核心概念
 
-- **Multi-Skill Support**: Choose from code-review, deploy, test-gen, refactor, and more
-- **RESTful API**: Simple HTTP API to create and manage tasks
-- **Real-time Updates**: WebSocket support for live task output
-- **Redis-Based**: Uses Redis for queue, storage, and pub/sub
-- **Docker Ready**: Includes Dockerfile and docker-compose
+### 什么是 CLI Pipeline？
 
-## Quick Start
+CLI Pipeline 允许将多个 CLI 命令串联或并联执行，形成一个完整的工作流：
 
-### Prerequisites
-
-- Go 1.22+
-- Redis
-- Claude Code CLI (`npm install -g @anthropic-ai/claude-code`)
-
-### Run Locally
-
-```bash
-# Install dependencies
-go mod tidy
-
-# Start Redis
-docker run -d -p 6379:6379 redis:7-alpine
-
-# Run the server
-make run
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     CLI Pipeline 编排                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐     │
+│  │ CLI #1  │───▶│ CLI #2  │───▶│ CLI #3  │───▶│ Result  │     │
+│  │代码分析  │    │生成测试  │    │运行测试  │    │  输出   │     │
+│  └─────────┘    └─────────┘    └─────────┘    └─────────┘     │
+│                                                                 │
+│  或并行执行:                                                     │
+│                                                                 │
+│  ┌─────────┐                                                   │
+│  │ CLI #1  │──┐                                                │
+│  └─────────┘  │    ┌─────────┐                                │
+│  ┌─────────┐  ├───▶│ 合并结果 │                                │
+│  │ CLI #2  │──┘    └─────────┘                                │
+│  └─────────┘                                                   │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Run with Docker
+### 主要功能
+
+1. **CLI 编排** - 将多个 CLI 命令组合成流水线
+2. **串行/并行** - 支持串行和并行执行模式
+3. **数据传递** - CLI 之间可以传递数据
+4. **状态管理** - 实时跟踪每个 CLI 的执行状态
+5. **错误处理** - 支持重试、回滚等策略
+
+## 快速开始
 
 ```bash
-# Build and run
-make docker
+# 启动服务
+docker-compose up -d
 
-# View logs
-make logs
-```
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/skills` | List all available skills |
-| GET | `/api/skills/:id` | Get skill details |
-| POST | `/api/skills/sync` | Sync skills from GitLab |
-| POST | `/api/tasks` | Create a new task |
-| GET | `/api/tasks` | List all tasks |
-| GET | `/api/tasks/:id` | Get task details |
-| GET | `/api/tasks/:id/result` | Get task result |
-| DELETE | `/api/tasks/:id` | Cancel a task |
-| GET | `/api/status` | Service status |
-| GET | `/ws/tasks/:id/output` | WebSocket for real-time output |
-
-## Usage Examples
-
-### List Skills
-
-```bash
-curl http://localhost:8080/api/skills
-```
-
-### Create Task
-
-```bash
-curl -X POST http://localhost:8080/api/tasks \
+# 创建一个 CLI Pipeline
+curl -X POST http://localhost:8080/api/pipelines \
   -H "Content-Type: application/json" \
   -d '{
-    "skill_id": "code-review",
-    "parameters": {
-      "target": "src/",
-      "depth": "deep"
-    }
+    "name": "code-quality-check",
+    "steps": [
+      {"cli": "claude", "action": "analyze", "params": {"target": "src/"}},
+      {"cli": "claude", "action": "test-gen", "params": {"source": "src/"}},
+      {"cli": "claude", "action": "review", "params": {"depth": "deep"}}
+    ]
   }'
 ```
 
-### Get Task Result
+## API 端点
 
-```bash
-curl http://localhost:8080/api/tasks/task-abc123/result
-```
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/pipelines` | GET/POST | 管道列表/创建 |
+| `/api/pipelines/:id` | GET/PUT/DELETE | 管道详情/更新/删除 |
+| `/api/pipelines/:id/run` | POST | 执行管道 |
+| `/api/pipelines/:id/status` | GET | 获取执行状态 |
+| `/api/runs` | GET | 所有执行记录 |
+| `/api/runs/:id` | GET | 执行详情 |
 
-## Available Skills
-
-| Skill | Description | Parameters |
-|-------|-------------|------------|
-| `code-review` | Code quality analysis | `target`, `depth` |
-| `deploy` | Deploy to environments | `environment`, `dry_run` |
-| `test-gen` | Generate unit tests | `source`, `framework` |
-| `refactor` | Refactor code | `target`, `type` |
-
-## Project Structure
-
-```
-claude-pipeline/
-├── cmd/server/          # Server entrypoint
-├── internal/
-│   ├── api/             # HTTP handlers and routes
-│   ├── config/          # Configuration
-│   ├── model/           # Data models
-│   ├── repository/      # Redis storage
-│   └── service/         # Business logic
-├── pkg/
-│   └── logger/          # Logging utilities
-├── config/              # Config files
-├── tests/               # Test files
-├── scripts/             # Utility scripts
-├── Dockerfile
-├── docker-compose.yml
-└── Makefile
-```
-
-## Configuration
-
-Edit `config/config.yaml`:
+## Pipeline 配置示例
 
 ```yaml
-server:
-  port: 8080
+name: full-code-review
+description: 完整的代码审查流程
 
-redis:
-  addr: localhost:6379
+# 执行模式: serial(串行) / parallel(并行)
+mode: serial
 
-gitlab:
-  url: https://gitlab.company.com
-  token: ${GITLAB_TOKEN}
+# 步骤定义
+steps:
+  - id: analyze
+    cli: claude
+    action: analyze
+    params:
+      target: src/
+    on_error: continue  # continue / stop / retry
 
-cli:
-  max_concurrency: 5
+  - id: security
+    cli: claude
+    action: security-scan
+    params:
+      target: src/
+    depends_on: [analyze]  # 依赖关系
+
+  - id: test-gen
+    cli: claude
+    action: test-gen
+    params:
+      source: "{{analyze.output.files}}"  # 引用上一步输出
+    depends_on: [analyze]
+
+  - id: run-tests
+    cli: npm
+    command: test
+    depends_on: [test-gen]
+
+# 并行组
+parallel_groups:
+  - steps: [security, test-gen]  # 这两个步骤并行执行
+    wait_all: true  # 等待全部完成
+
+# 错误处理
+error_handling:
+  retry: 2
+  on_failure: notify  # notify / rollback
+  webhook: https://hooks.example.com/failure
+
+# 输出配置
+output:
+  format: json
+  merge_strategy: deep  # deep / shallow
 ```
 
-## Testing
+## 项目结构
 
-```bash
-# Run unit tests
-make test
-
-# Run integration tests
-./scripts/test.sh
-
-# Run API demo
-./scripts/demo.sh
 ```
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `ANTHROPIC_API_KEY` | Anthropic API key for Claude |
-| `GITLAB_TOKEN` | GitLab access token |
-
-## License
-
-MIT
+claude-cli-orchestration/
+├── cmd/server/           # 服务入口
+├── internal/
+│   ├── api/              # HTTP API
+│   ├── orchestrator/     # 编排引擎
+│   ├── executor/         # CLI 执行器
+│   ├── pipeline/         # 管道定义
+│   ├── step/             # 步骤执行
+│   └── storage/          # 存储层 (Redis)
+├── pkg/
+│   ├── cli/              # CLI 客户端
+│   └── logger/           # 日志
+├── config/               # 配置文件
+├── examples/             # 示例 Pipeline
+└── frontend/             # Web UI
+```

@@ -1,8 +1,6 @@
 package api
 
 import (
-	"time"
-
 	"github.com/company/claude-pipeline/internal/config"
 	"github.com/company/claude-pipeline/internal/service"
 	"github.com/gin-gonic/gin"
@@ -13,14 +11,14 @@ type Server struct {
 	cfg *config.Config
 }
 
-func NewServer(cfg *config.Config, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor) *Server {
+func NewServer(cfg *config.Config, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator) *Server {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 	r.Use(CORSMiddleware())
 
-	SetupRoutes(r, skillSvc, taskSvc, executor)
+	SetupRoutes(r, skillSvc, taskSvc, executor, orch)
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {
@@ -47,19 +45,5 @@ func CORSMiddleware() gin.HandlerFunc {
 		}
 
 		c.Next()
-	}
-}
-
-func LoggerMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		t := time.Now()
-
-		c.Next()
-
-		latency := time.Since(t)
-		status := c.Writer.Status()
-
-		c.Set("latency", latency)
-		c.Set("status", status)
 	}
 }

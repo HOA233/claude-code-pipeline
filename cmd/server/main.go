@@ -38,17 +38,19 @@ func main() {
 	skillService := service.NewSkillService(redisClient, cfg.GitLab)
 	taskService := service.NewTaskService(redisClient)
 	executor := service.NewCLIExecutor(redisClient, cfg.CLI)
+	orchestrator := service.NewOrchestrator(redisClient, executor)
 
 	// Sync default skills
 	if _, err := skillService.SyncFromGitLab(context.Background()); err != nil {
 		logger.Warn("Failed to sync skills: ", err)
 	}
 
-	// Start task consumer
+	// Start consumers
 	go executor.StartConsumer(context.Background())
+	go orchestrator.StartConsumer(context.Background())
 
 	// Start HTTP server
-	server := api.NewServer(cfg, skillService, taskService, executor)
+	server := api.NewServer(cfg, skillService, taskService, executor, orchestrator)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -58,8 +60,7 @@ func main() {
 		<-quit
 		logger.Info("Shutting down server...")
 		executor.Stop()
-		server.Engine.Context().
-			Done()
+		orchestrator.Stop()
 	}()
 
 	logger.Info("Server starting on :8080")
