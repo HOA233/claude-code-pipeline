@@ -1,0 +1,344 @@
+{
+  "info": {
+    "name": "Claude Pipeline API",
+    "description": "API collection for Claude Code CLI Pipeline Orchestration Service",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{api_key}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api"
+    },
+    {
+      "key": "api_key",
+      "value": "your-api-key-here"
+    }
+  ],
+  "item": [
+    {
+      "name": "Skills",
+      "item": [
+        {
+          "name": "List All Skills",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/skills",
+              "host": ["{{base_url}}"],
+              "path": ["skills"]
+            },
+            "description": "Get all available skills"
+          }
+        },
+        {
+          "name": "Get Skill Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/skills/:id",
+              "host": ["{{base_url}}"],
+              "path": ["skills", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "code-review"
+                }
+              ]
+            },
+            "description": "Get detailed information about a specific skill"
+          }
+        },
+        {
+          "name": "Sync Skills from GitLab",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/skills/sync",
+              "host": ["{{base_url}}"],
+              "path": ["skills", "sync"]
+            },
+            "description": "Sync skills from GitLab repository"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skill_id\": \"code-review\",\n  \"parameters\": {\n    \"target\": \"src/\",\n    \"depth\": \"deep\"\n  },\n  \"context\": {\n    \"repository\": \"https://github.com/company/project.git\",\n    \"branch\": \"main\"\n  },\n  \"options\": {\n    \"timeout\": 600,\n    \"callback_url\": \"https://webhook.example.com/callback\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"]
+            },
+            "description": "Create a new task with selected skill"
+          }
+        },
+        {
+          "name": "List Tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks?status=running&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "running"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "List all tasks with optional filters"
+          }
+        },
+        {
+          "name": "Get Task Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks/:id",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "task-abc123"
+                }
+              ]
+            },
+            "description": "Get detailed status of a specific task"
+          }
+        },
+        {
+          "name": "Get Task Result",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks/:id/result",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", ":id", "result"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "task-abc123"
+                }
+              ]
+            },
+            "description": "Get the result of a completed task"
+          }
+        },
+        {
+          "name": "Cancel Task",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks/:id",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "task-abc123"
+                }
+              ]
+            },
+            "description": "Cancel a running task"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pipelines",
+      "item": [
+        {
+          "name": "Create Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"full-code-review\",\n  \"description\": \"Complete code review workflow\",\n  \"mode\": \"serial\",\n  \"steps\": [\n    {\n      \"id\": \"analyze\",\n      \"cli\": \"claude\",\n      \"action\": \"analyze\",\n      \"params\": {\"target\": \"src/\"}\n    },\n    {\n      \"id\": \"security\",\n      \"cli\": \"claude\",\n      \"action\": \"security-scan\",\n      \"params\": {\"target\": \"src/\"},\n      \"depends_on\": [\"analyze\"]\n    },\n    {\n      \"id\": \"test-gen\",\n      \"cli\": \"claude\",\n      \"action\": \"test-gen\",\n      \"params\": {\"source\": \"src/\"},\n      \"depends_on\": [\"analyze\"]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/pipelines",
+              "host": ["{{base_url}}"],
+              "path": ["pipelines"]
+            },
+            "description": "Create a new pipeline"
+          }
+        },
+        {
+          "name": "List Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pipelines",
+              "host": ["{{base_url}}"],
+              "path": ["pipelines"]
+            }
+          }
+        },
+        {
+          "name": "Run Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pipelines/:id/run",
+              "host": ["{{base_url}}"],
+              "path": ["pipelines", ":id", "run"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "pipeline-001"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Pipeline Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/pipelines/:id/status",
+              "host": ["{{base_url}}"],
+              "path": ["pipelines", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "pipeline-001"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Runs",
+      "item": [
+        {
+          "name": "List All Runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/runs",
+              "host": ["{{base_url}}"],
+              "path": ["runs"]
+            },
+            "description": "Get all pipeline execution runs"
+          }
+        },
+        {
+          "name": "Get Run Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/runs/:id",
+              "host": ["{{base_url}}"],
+              "path": ["runs", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "run-abc123"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/../health",
+              "host": ["{{base_url}}"],
+              "path": ["..", "health"]
+            }
+          }
+        },
+        {
+          "name": "Get System Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["status"]
+            }
+          }
+        },
+        {
+          "name": "Get Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/../metrics",
+              "host": ["{{base_url}}"],
+              "path": ["..", "metrics"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
