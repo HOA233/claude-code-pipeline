@@ -1,0 +1,704 @@
+openapi: 3.0.3
+info:
+  title: Claude Code CLI Pipeline Service API
+  description: |
+    A unified API platform for orchestrating multiple CLI tools through pipelines.
+
+    ## Features
+    - **Skills**: Pre-defined CLI execution templates
+    - **Tasks**: Single CLI execution instances
+    - **Pipelines**: Multi-CLI orchestration (serial/parallel/hybrid)
+    - **Runs**: Pipeline execution instances
+
+    ## Authentication
+    API key can be provided via:
+    - `X-API-Key` header
+    - `Authorization: Bearer <token>` header
+
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8080/api
+    description: Development server
+  - url: https://pipeline.example.com/api
+    description: Production server
+
+tags:
+  - name: Skills
+    description: CLI execution templates management
+  - name: Tasks
+    description: Single CLI execution operations
+  - name: Pipelines
+    description: Multi-CLI orchestration
+  - name: Runs
+    description: Pipeline execution management
+
+paths:
+  /skills:
+    get:
+      tags: [Skills]
+      summary: List all available skills
+      description: Returns a list of all available skills that can be used to create tasks
+      operationId: listSkills
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  skills:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Skill'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /skills/{id}:
+    get:
+      tags: [Skills]
+      summary: Get skill details
+      operationId: getSkill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: code-review
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Skill'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /skills/sync:
+    post:
+      tags: [Skills]
+      summary: Sync skills from GitLab
+      operationId: syncSkills
+      responses:
+        '200':
+          description: Skills synced successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  count:
+                    type: integer
+
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: List all tasks
+      operationId: listTasks
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+    post:
+      tags: [Tasks]
+      summary: Create a new task
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '202':
+          description: Task created and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /tasks/{id}:
+    get:
+      tags: [Tasks]
+      summary: Get task details
+      operationId: getTask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Tasks]
+      summary: Cancel a running task
+      operationId: cancelTask
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task cancelled
+        '400':
+          description: Cannot cancel task in current state
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tasks/{id}/result:
+    get:
+      tags: [Tasks]
+      summary: Get task result
+      operationId: getTaskResult
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Task result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResult'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /pipelines:
+    get:
+      tags: [Pipelines]
+      summary: List all pipelines
+      operationId: listPipelines
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pipelines:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Pipeline'
+    post:
+      tags: [Pipelines]
+      summary: Create a new pipeline
+      operationId: createPipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PipelineCreateRequest'
+      responses:
+        '201':
+          description: Pipeline created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /pipelines/{id}:
+    get:
+      tags: [Pipelines]
+      summary: Get pipeline details
+      operationId: getPipeline
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pipeline'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Pipelines]
+      summary: Delete a pipeline
+      operationId: deletePipeline
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pipeline deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /pipelines/{id}/run:
+    post:
+      tags: [Pipelines]
+      summary: Execute a pipeline
+      operationId: runPipeline
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunCreateRequest'
+      responses:
+        '202':
+          description: Pipeline execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /runs:
+    get:
+      tags: [Runs]
+      summary: List all runs
+      operationId: listRuns
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  runs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Run'
+
+  /runs/{id}:
+    get:
+      tags: [Runs]
+      summary: Get run details
+      operationId: getRun
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Runs]
+      summary: Cancel a running pipeline
+      operationId: cancelRun
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Run cancelled
+        '400':
+          description: Cannot cancel run in current state
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /status:
+    get:
+      tags: [Status]
+      summary: Get service status
+      operationId: getStatus
+      responses:
+        '200':
+          description: Service status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceStatus'
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check endpoint
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+components:
+  schemas:
+    Skill:
+      type: object
+      properties:
+        id:
+          type: string
+          example: code-review
+        name:
+          type: string
+          example: Code Review
+        description:
+          type: string
+          example: Analyzes code quality and detects issues
+        version:
+          type: string
+          example: "1.0.0"
+        category:
+          type: string
+          example: quality
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillParameter'
+        tags:
+          type: array
+          items:
+            type: string
+        enabled:
+          type: boolean
+
+    SkillParameter:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [string, number, boolean, enum]
+        required:
+          type: boolean
+        description:
+          type: string
+        default:
+          type: object
+        values:
+          type: array
+          items:
+            type: string
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          example: task-abc123
+        skill_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        parameters:
+          type: object
+        result:
+          type: object
+        error:
+          type: string
+        duration:
+          type: integer
+          description: Duration in milliseconds
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    TaskStatus:
+      type: string
+      enum: [pending, running, completed, failed, cancelled]
+
+    TaskCreateRequest:
+      type: object
+      required:
+        - skill_id
+      properties:
+        skill_id:
+          type: string
+          example: code-review
+        parameters:
+          type: object
+          example:
+            target: src/
+            depth: standard
+        context:
+          type: object
+        options:
+          type: object
+          properties:
+            timeout:
+              type: integer
+            callback_url:
+              type: string
+              format: uri
+
+    TaskResult:
+      type: object
+      properties:
+        task_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        result:
+          type: object
+        error:
+          type: string
+
+    Pipeline:
+      type: object
+      properties:
+        id:
+          type: string
+          example: pipeline-abc123
+        name:
+          type: string
+        description:
+          type: string
+        mode:
+          $ref: '#/components/schemas/ExecutionMode'
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Step'
+        created_at:
+          type: string
+          format: date-time
+
+    PipelineCreateRequest:
+      type: object
+      required:
+        - name
+        - steps
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        mode:
+          $ref: '#/components/schemas/ExecutionMode'
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/Step'
+        error_handling:
+          type: object
+
+    Step:
+      type: object
+      required:
+        - id
+        - cli
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        cli:
+          type: string
+          description: CLI tool to use (claude, npm, git, docker, etc.)
+        action:
+          type: string
+        command:
+          type: string
+        params:
+          type: object
+        depends_on:
+          type: array
+          items:
+            type: string
+        on_error:
+          type: string
+          enum: [continue, stop, retry]
+        timeout:
+          type: integer
+
+    ExecutionMode:
+      type: string
+      enum: [serial, parallel, hybrid]
+      description: |
+        - serial: Execute steps one by one
+        - parallel: Execute all steps concurrently
+        - hybrid: Execute based on dependency graph
+
+    Run:
+      type: object
+      properties:
+        id:
+          type: string
+        pipeline_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        step_results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StepResult'
+        error:
+          type: string
+        duration:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    RunCreateRequest:
+      type: object
+      required:
+        - pipeline_id
+      properties:
+        pipeline_id:
+          type: string
+        params:
+          type: object
+        context:
+          type: object
+
+    StepResult:
+      type: object
+      properties:
+        step_id:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        output:
+          type: object
+        error:
+          type: string
+        duration:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        retries:
+          type: integer
+
+    ServiceStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        cli:
+          type: object
+          properties:
+            active_count:
+              type: integer
+            max_concurrency:
+              type: integer
+            active_tasks:
+              type: array
+              items:
+                type: string
+        skills:
+          type: object
+          properties:
+            loaded:
+              type: integer
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Resource not found
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
