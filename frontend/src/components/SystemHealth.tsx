@@ -2,21 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import './SystemHealth.css';
 
+interface ComponentHealth {
+  status: string;
+  latency?: number;
+  running_tasks?: number;
+  active_jobs?: number;
+}
+
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
   components: {
-    redis: {
-      status: string;
-      latency?: number;
-    };
-    executor: {
-      status: string;
-      running_tasks?: number;
-    };
-    scheduler: {
-      status: string;
-      active_jobs?: number;
-    };
+    redis: ComponentHealth;
+    executor: ComponentHealth;
+    scheduler: ComponentHealth;
   };
   uptime?: number;
   version?: string;
