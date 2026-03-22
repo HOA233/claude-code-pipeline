@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -267,7 +266,7 @@ func (s *TagService) SearchTags(query string) []*Tag {
 
 	var results []*Tag
 	for _, tag := range s.tags {
-		if containsString(tag.Key, query) || containsString(tag.Value, query) {
+		if containsStringTag(tag.Key, query) || containsStringTag(tag.Value, query) {
 			results = append(results, tag)
 		}
 	}
@@ -400,11 +399,11 @@ func (b *TagBinding) ToJSON() ([]byte, error) {
 	return json.Marshal(b)
 }
 
-func containsString(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || (len(s) > 0 && len(substr) > 0 && containsSubstring(s, substr)))
+func containsStringTag(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || (len(s) > 0 && len(substr) > 0 && containsSubstringTag(s, substr)))
 }
 
-func containsSubstring(s, substr string) bool {
+func containsSubstringTag(s, substr string) bool {
 	for i := 0; i <= len(s)-len(substr); i++ {
 		if s[i:i+len(substr)] == substr {
 			return true

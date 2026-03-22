@@ -377,7 +377,7 @@ func (s *FeatureFlagService) ListFlags(tag string) []*FeatureFlag {
 
 	flags := make([]*FeatureFlag, 0)
 	for _, flag := range s.flags {
-		if tag == "" || containsStr(flag.Tags, tag) {
+		if tag == "" || containsStringInSlice(flag.Tags, tag) {
 			flags = append(flags, flag)
 		}
 	}
@@ -496,4 +496,13 @@ func toFloat64(v interface{}) (float64, bool) {
 	default:
 		return 0, false
 	}
+}
+
+func containsStringInSlice(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
 }

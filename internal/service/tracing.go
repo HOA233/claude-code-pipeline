@@ -16,6 +16,13 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+// NoopTracerProvider is a simple no-op tracer provider
+type NoopTracerProvider struct{}
+
+func (p NoopTracerProvider) Tracer(name string, opts ...trace.TracerOption) trace.Tracer {
+	return trace.NewNoopTracerProvider().Tracer(name)
+}
+
 // TracingService provides distributed tracing capabilities
 type TracingService struct {
 	tracer    trace.Tracer
@@ -37,7 +44,7 @@ type TracingConfig struct {
 func NewTracingService(cfg *TracingConfig) (*TracingService, error) {
 	if !cfg.Enabled {
 		return &TracingService{
-			tracer: trace.NoopTracerProvider{}.Tracer("noop"),
+			tracer: trace.NewNoopTracerProvider().Tracer("noop"),
 		}, nil
 	}
 

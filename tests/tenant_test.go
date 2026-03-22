@@ -313,7 +313,7 @@ func TestTenantService_GetQuota(t *testing.T) {
 	}
 }
 
-func TestTenantService_CheckQuota(t *testing.T) {
+func TestTenantBasic_CheckQuota(t *testing.T) {
 	ts := service.NewTenantService()
 
 	tenant := &service.Tenant{

@@ -324,14 +324,14 @@ func TestQuotaService_Periods(t *testing.T) {
 
 // Health Service Tests
 
-func TestHealthService_New(t *testing.T) {
+func TestQuotaHealthService_New(t *testing.T) {
 	hs := service.NewHealthService("1.0.0")
 	if hs == nil {
 		t.Fatal("Expected non-nil health service")
 	}
 }
 
-func TestHealthService_RegisterCheck(t *testing.T) {
+func TestQuotaHealthService_RegisterCheck(t *testing.T) {
 	hs := service.NewHealthService("1.0.0")
 
 	hs.RegisterCheck("database", func() error {
@@ -369,7 +369,7 @@ func TestHealthService_RunChecks_Failing(t *testing.T) {
 	}
 }
 
-func TestHealthService_GetStatus(t *testing.T) {
+func TestQuotaHealthService_GetStatus(t *testing.T) {
 	hs := service.NewHealthService("1.0.0")
 
 	status := hs.GetStatus()

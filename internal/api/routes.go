@@ -9,7 +9,7 @@ import (
 func SetupRoutes(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient) {
 	// Initialize WebSocket handlers
 	wsHandler := NewWebSocketHandler(redis)
-	sseHandler := NewSSEHandler(redis)
+	taskSSEHandler := NewTaskSSEHandler(redis)
 
 	api := r.Group("/api")
 	{
@@ -47,9 +47,9 @@ func SetupRoutes(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service
 	r.GET("/ws", wsHandler.HandleGlobalWS)
 
 	// SSE endpoints (alternative to WebSocket)
-	r.GET("/sse/tasks/:id", sseHandler.HandleTaskSSE)
-	r.GET("/sse/runs/:id", sseHandler.HandleRunSSE)
-	r.GET("/sse", sseHandler.HandleGlobalSSE)
+	r.GET("/sse/tasks/:id", taskSSEHandler.HandleTaskSSE)
+	r.GET("/sse/runs/:id", taskSSEHandler.HandleRunSSE)
+	r.GET("/sse", taskSSEHandler.HandleGlobalSSE)
 }
 
 // SetupRoutesWithScheduler sets up routes including scheduler endpoints

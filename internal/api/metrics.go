@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"runtime"
 	"sync/atomic"
@@ -145,39 +146,5 @@ claude_pipeline_goroutines %d
 }
 
 func formatMetrics(format string, args ...interface{}) string {
-	return sprintf(format, args...)
-}
-
-func sprintf(format string, args ...interface{}) string {
-	return gin.H{}.String() // placeholder
-}
-
-// HealthHandler returns detailed health status
-func HealthHandler(metrics *Metrics) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		uptime := time.Since(metrics.StartTime)
-
-		var memStats runtime.MemStats
-		runtime.ReadMemStats(&memStats)
-
-		c.JSON(http.StatusOK, gin.H{
-			"status": "healthy",
-			"uptime": uptime.String(),
-			"metrics": gin.H{
-				"requests_total":    metrics.RequestsTotal.Load(),
-				"requests_active":   metrics.RequestsActive.Load(),
-				"tasks_created":     metrics.TasksCreated.Load(),
-				"tasks_completed":   metrics.TasksCompleted.Load(),
-				"tasks_failed":      metrics.TasksFailed.Load(),
-				"pipelines_created": metrics.PipelinesCreated.Load(),
-				"pipelines_run":     metrics.PipelinesRun.Load(),
-			},
-			"runtime": gin.H{
-				"goroutines":   runtime.NumGoroutine(),
-				"memory_alloc": memStats.Alloc,
-				"memory_sys":   memStats.Sys,
-				"go_version":   runtime.Version(),
-			},
-		})
-	}
+	return fmt.Sprintf(format, args...)
 }

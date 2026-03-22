@@ -20,16 +20,16 @@ func NewTemplateService(redis *repository.RedisClient) *TemplateService {
 	return &TemplateService{redis: redis}
 }
 
-// PipelineTemplate represents a reusable pipeline template
-type PipelineTemplate struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Category    string                 `json:"category"`
-	Steps       []TemplateStep         `json:"steps"`
-	Variables   map[string]VariableDef `json:"variables"`
-	Mode        model.ExecutionMode    `json:"mode"`
-	CreatedAt   string                 `json:"created_at"`
+// PipelineTmpl represents a reusable pipeline template
+type PipelineTmpl struct {
+	ID          string              `json:"id"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Category    string              `json:"category"`
+	Steps       []TemplateStep      `json:"steps"`
+	Variables   map[string]VarDef   `json:"variables"`
+	Mode        model.ExecutionMode `json:"mode"`
+	CreatedAt   string              `json:"created_at"`
 }
 
 // TemplateStep represents a step in a template
@@ -45,8 +45,8 @@ type TemplateStep struct {
 	Timeout     int                    `json:"timeout,omitempty"`
 }
 
-// VariableDef defines a template variable
-type VariableDef struct {
+// VarDef defines a template variable
+type VarDef struct {
 	Type        string      `json:"type"`
 	Required    bool        `json:"required"`
 	Default     interface{} `json:"default,omitempty"`
@@ -55,14 +55,14 @@ type VariableDef struct {
 }
 
 // Built-in templates
-var builtinTemplates = []PipelineTemplate{
+var builtinTemplates = []PipelineTmpl{
 	{
 		ID:          "ci-pipeline",
 		Name:        "CI Pipeline",
 		Description: "Standard CI pipeline with lint, test, and build",
 		Category:    "ci",
 		Mode:        model.ModeSerial,
-		Variables: map[string]VariableDef{
+		Variables: map[string]VarDef{
 			"source_dir": {
 				Type:        "string",
 				Required:    true,
@@ -110,7 +110,7 @@ var builtinTemplates = []PipelineTemplate{
 		Description: "Automated code review with security analysis",
 		Category:    "quality",
 		Mode:        model.ModeParallel,
-		Variables: map[string]VariableDef{
+		Variables: map[string]VarDef{
 			"target": {
 				Type:        "string",
 				Required:    true,
@@ -153,7 +153,7 @@ var builtinTemplates = []PipelineTemplate{
 		Description: "Standard deployment pipeline",
 		Category:    "deploy",
 		Mode:        model.ModeSerial,
-		Variables: map[string]VariableDef{
+		Variables: map[string]VarDef{
 			"environment": {
 				Type:        "enum",
 				Required:    true,
@@ -201,7 +201,7 @@ var builtinTemplates = []PipelineTemplate{
 		Description: "Generate tests for source code",
 		Category:    "testing",
 		Mode:        model.ModeSerial,
-		Variables: map[string]VariableDef{
+		Variables: map[string]VarDef{
 			"source": {
 				Type:        "string",
 				Required:    true,
@@ -244,14 +244,14 @@ var builtinTemplates = []PipelineTemplate{
 }
 
 // ListTemplates returns all available templates
-func (s *TemplateService) ListTemplates(ctx context.Context) ([]PipelineTemplate, error) {
+func (s *TemplateService) ListTemplates(ctx context.Context) ([]PipelineTmpl, error) {
 	// Get custom templates from Redis
-	keys, err := s.redis.Keys(ctx, "template:*")
+	keys, err := s.redis.ListCacheKeys(ctx, "template:*")
 	if err != nil {
 		return builtinTemplates, nil
 	}
 
-	templates := make([]PipelineTemplate, len(builtinTemplates))
+	templates := make([]PipelineTmpl, len(builtinTemplates))
 	copy(templates, builtinTemplates)
 
 	for _, key := range keys {
@@ -260,7 +260,7 @@ func (s *TemplateService) ListTemplates(ctx context.Context) ([]PipelineTemplate
 			continue
 		}
 
-		var template PipelineTemplate
+		var template PipelineTmpl
 		if err := json.Unmarshal(data, &template); err != nil {
 			continue
 		}
@@ -271,7 +271,7 @@ func (s *TemplateService) ListTemplates(ctx context.Context) ([]PipelineTemplate
 }
 
 // GetTemplate returns a template by ID
-func (s *TemplateService) GetTemplate(ctx context.Context, id string) (*PipelineTemplate, error) {
+func (s *TemplateService) GetTemplate(ctx context.Context, id string) (*PipelineTmpl, error) {
 	// Check built-in templates
 	for _, t := range builtinTemplates {
 		if t.ID == id {
@@ -285,7 +285,7 @@ func (s *TemplateService) GetTemplate(ctx context.Context, id string) (*Pipeline
 		return nil, fmt.Errorf("template not found: %s", id)
 	}
 
-	var template PipelineTemplate
+	var template PipelineTmpl
 	if err := json.Unmarshal(data, &template); err != nil {
 		return nil, err
 	}
@@ -356,7 +356,7 @@ func (s *TemplateService) CreatePipelineFromTemplate(ctx context.Context, templa
 }
 
 // SaveTemplate saves a custom template
-func (s *TemplateService) SaveTemplate(ctx context.Context, template *PipelineTemplate) error {
+func (s *TemplateService) SaveTemplate(ctx context.Context, template *PipelineTmpl) error {
 	if template.ID == "" {
 		template.ID = "template-" + uuid.New().String()[:8]
 	}

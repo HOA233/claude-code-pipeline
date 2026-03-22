@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -87,7 +86,7 @@ func NewAuthService(cfg *AuthConfig) *AuthService {
 	}
 
 	return &AuthService{
-		apiKeys:     make(map[string]*APIKey),
+		apiKeys:     make(map[string]*APIKeyAuth),
 		sessions:    make(map[string]*Session),
 		permissions: make(map[string][]string),
 		jwtSecret:   cfg.JWTSecret,
@@ -185,7 +184,7 @@ func (s *AuthService) ListAPIKeys(tenantID string) []*APIKeyAuth {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	keys := make([]*APIKey, 0)
+	keys := make([]*APIKeyAuth, 0)
 	for _, k := range s.apiKeys {
 		if tenantID == "" || k.TenantID == tenantID {
 			// Don't expose the actual key

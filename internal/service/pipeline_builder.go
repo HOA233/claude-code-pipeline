@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
+
+	"github.com/company/claude-pipeline/internal/model"
 )
 
 // PipelineBuilder provides a fluent API for constructing pipelines
@@ -280,18 +281,18 @@ func (b *PipelineBuilder) Build() (*PipelineDef, error) {
 // PipelineRegistry manages pipeline definitions
 type PipelineRegistry struct {
 	mu        sync.RWMutex
-	pipelines map[string]*PipelineDefinition
+	pipelines map[string]*PipelineDef
 }
 
 // NewPipelineRegistry creates a new pipeline registry
 func NewPipelineRegistry() *PipelineRegistry {
 	return &PipelineRegistry{
-		pipelines: make(map[string]*PipelineDefinition),
+		pipelines: make(map[string]*PipelineDef),
 	}
 }
 
 // Register registers a pipeline definition
-func (r *PipelineRegistry) Register(pipeline *PipelineDefinition) error {
+func (r *PipelineRegistry) Register(pipeline *PipelineDef) error {
 	if pipeline.ID == "" {
 		return errors.New("pipeline ID is required")
 	}
@@ -304,7 +305,7 @@ func (r *PipelineRegistry) Register(pipeline *PipelineDefinition) error {
 }
 
 // Get retrieves a pipeline by ID
-func (r *PipelineRegistry) Get(id string) (*PipelineDefinition, error) {
+func (r *PipelineRegistry) Get(id string) (*PipelineDef, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -316,11 +317,11 @@ func (r *PipelineRegistry) Get(id string) (*PipelineDefinition, error) {
 }
 
 // List returns all pipeline definitions
-func (r *PipelineRegistry) List() []*PipelineDefinition {
+func (r *PipelineRegistry) List() []*PipelineDef {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	pipelines := make([]*PipelineDefinition, 0, len(r.pipelines))
+	pipelines := make([]*PipelineDef, 0, len(r.pipelines))
 	for _, p := range r.pipelines {
 		pipelines = append(pipelines, p)
 	}
@@ -337,13 +338,13 @@ func (r *PipelineRegistry) Delete(id string) error {
 }
 
 // ToJSON serializes a pipeline to JSON
-func (p *PipelineDefinition) ToJSON() ([]byte, error) {
+func (p *PipelineDef) ToJSON() ([]byte, error) {
 	return json.MarshalIndent(p, "", "  ")
 }
 
 // ParsePipeline parses a pipeline from JSON
-func ParsePipeline(data []byte) (*PipelineDefinition, error) {
-	var pipeline PipelineDefinition
+func ParsePipeline(data []byte) (*PipelineDef, error) {
+	var pipeline PipelineDef
 	if err := json.Unmarshal(data, &pipeline); err != nil {
 		return nil, err
 	}
@@ -351,7 +352,7 @@ func ParsePipeline(data []byte) (*PipelineDefinition, error) {
 }
 
 // Validate validates a pipeline definition
-func (p *PipelineDefinition) Validate() error {
+func (p *PipelineDef) Validate() error {
 	if p.ID == "" {
 		return errors.New("pipeline ID is required")
 	}
@@ -495,7 +496,7 @@ func ListTemplates() []*PipelineTemplate {
 }
 
 // BuildFromTemplate creates a pipeline from a template
-func BuildFromTemplate(templateID string, params map[string]interface{}) (*PipelineDefinition, error) {
+func BuildFromTemplate(templateID string, params map[string]interface{}) (*PipelineDef, error) {
 	template, err := GetTemplate(templateID)
 	if err != nil {
 		return nil, err
@@ -523,17 +524,13 @@ func NewPipelineExecutor(registry *PipelineRegistry, eventBus *EventBus, runServ
 
 // Execute executes a pipeline by ID
 func (e *PipelineExecutor) Execute(ctx context.Context, pipelineID string, params map[string]interface{}) (string, error) {
-	pipeline, err := e.registry.Get(pipelineID)
+	_, err := e.registry.Get(pipelineID)
 	if err != nil {
 		return "", err
 	}
 
 	// Create run
-	run, err := e.runService.CreateRun(ctx, &struct {
-		PipelineID string
-		Params     map[string]interface{}
-		Context    map[string]interface{}
-	}{
+	run, err := e.runService.CreateRun(ctx, &model.RunCreateRequest{
 		PipelineID: pipelineID,
 		Params:     params,
 	})

@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/company/claude-pipeline/internal/model"
 	"github.com/company/claude-pipeline/internal/repository"
 	"github.com/company/claude-pipeline/internal/service"
 	"github.com/gin-gonic/gin"
@@ -216,7 +217,7 @@ func DetailedStatusHandler(
 	}
 }
 
-func countEnabledSkills(skills []*service.Skill) int {
+func countEnabledSkills(skills []*model.Skill) int {
 	count := 0
 	for _, s := range skills {
 		if s.Enabled {

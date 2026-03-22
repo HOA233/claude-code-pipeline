@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/company/claude-pipeline/internal/config"
+	"github.com/company/claude-pipeline/internal/repository"
 	"github.com/company/claude-pipeline/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -11,14 +12,14 @@ type Server struct {
 	cfg *config.Config
 }
 
-func NewServer(cfg *config.Config, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator) *Server {
+func NewServer(cfg *config.Config, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient) *Server {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 	r.Use(CORSMiddleware())
 
-	SetupRoutes(r, skillSvc, taskSvc, executor, orch)
+	SetupRoutes(r, skillSvc, taskSvc, executor, orch, redis)
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"sync"
 	"time"
 
@@ -12,15 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		// Configure based on CORS settings
-		return true
-	},
-}
 
 // WebSocketHandler handles WebSocket connections for real-time updates
 type WebSocketHandler struct {
@@ -296,20 +286,20 @@ func (h *WebSocketHandler) ConnectionStats() map[string]int {
 	return stats
 }
 
-// SSEHandler handles Server-Sent Events for clients that prefer SSE over WebSocket
-type SSEHandler struct {
+// TaskSSEHandler handles Server-Sent Events for clients that prefer SSE over WebSocket
+type TaskSSEHandler struct {
 	redis *repository.RedisClient
 }
 
-// NewSSEHandler creates a new SSE handler
-func NewSSEHandler(redis *repository.RedisClient) *SSEHandler {
-	return &SSEHandler{
+// NewTaskSSEHandler creates a new task SSE handler
+func NewTaskSSEHandler(redis *repository.RedisClient) *TaskSSEHandler {
+	return &TaskSSEHandler{
 		redis: redis,
 	}
 }
 
 // HandleTaskSSE handles SSE connection for task updates
-func (h *SSEHandler) HandleTaskSSE(c *gin.Context) {
+func (h *TaskSSEHandler) HandleTaskSSE(c *gin.Context) {
 	taskID := c.Param("id")
 
 	// Set SSE headers
@@ -355,7 +345,7 @@ func (h *SSEHandler) HandleTaskSSE(c *gin.Context) {
 }
 
 // HandleRunSSE handles SSE connection for run updates
-func (h *SSEHandler) HandleRunSSE(c *gin.Context) {
+func (h *TaskSSEHandler) HandleRunSSE(c *gin.Context) {
 	runID := c.Param("id")
 
 	// Set SSE headers
@@ -401,7 +391,7 @@ func (h *SSEHandler) HandleRunSSE(c *gin.Context) {
 }
 
 // HandleGlobalSSE handles SSE connection for global updates
-func (h *SSEHandler) HandleGlobalSSE(c *gin.Context) {
+func (h *TaskSSEHandler) HandleGlobalSSE(c *gin.Context) {
 	// Set SSE headers
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
@@ -430,7 +420,7 @@ func (h *SSEHandler) HandleGlobalSSE(c *gin.Context) {
 	}
 }
 
-func (h *SSEHandler) getSystemStats() map[string]interface{} {
+func (h *TaskSSEHandler) getSystemStats() map[string]interface{} {
 	ctx := context.Background()
 	stats := make(map[string]interface{})
 

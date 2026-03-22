@@ -373,7 +373,9 @@ func (s *EnvironmentService) RollbackDeployment(deploymentID, rollbackFrom strin
 				for _, prev := range deployments {
 					if prev.ID == rollbackFrom {
 						s.environments[envID].Status = "active"
-						s.environments[envID].LastDeployedAt = &prev.CompletedAt
+						if prev.CompletedAt != nil {
+							s.environments[envID].LastDeployedAt = prev.CompletedAt
+						}
 						break
 					}
 				}

@@ -11,6 +11,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/company/claude-pipeline/internal/model"
 )
 
 // WebhookReceiver handles incoming webhooks from external services
@@ -114,11 +116,11 @@ func handleGitHubPush(ctx context.Context, payload map[string]interface{}, taskS
 	if ref == "refs/heads/main" || ref == "refs/heads/master" {
 		// Trigger CI/CD pipeline
 		repoName, _ := repo["name"].(string)
-		_, err := orch.CreatePipeline(ctx, &PipelineConfig{
+		_, err := orch.CreatePipeline(ctx, &model.PipelineCreateRequest{
 			Name:        fmt.Sprintf("ci-%s-%d", repoName, time.Now().Unix()),
-			Mode:        "serial",
+			Mode:        model.ModeSerial,
 			Description: "Triggered by GitHub push",
-			Steps: []PipelineStep{
+			Steps: []model.Step{
 				{ID: "checkout", CLI: "git", Action: "clone"},
 				{ID: "install", CLI: "npm", Action: "install"},
 				{ID: "test", CLI: "npm", Action: "test"},
@@ -137,9 +139,9 @@ func handleGitHubPR(ctx context.Context, payload map[string]interface{}, taskSvc
 		pr, _ := payload["pull_request"].(map[string]interface{})
 		prNumber, _ := pr["number"].(float64)
 
-		_, err := taskSvc.CreateTask(ctx, &TaskConfig{
+		_, err := taskSvc.CreateTask(ctx, &model.TaskCreateRequest{
 			SkillID: "code-review",
-			Params: map[string]interface{}{
+			Parameters: map[string]interface{}{
 				"target":      fmt.Sprintf("pr-%d", int(prNumber)),
 				"depth":       "standard",
 				"output_file": fmt.Sprintf("review-pr-%d.json", int(prNumber)),
@@ -157,11 +159,11 @@ func handleGitHubRelease(ctx context.Context, payload map[string]interface{}, ta
 		release, _ := payload["release"].(map[string]interface{})
 		tag, _ := release["tag_name"].(string)
 
-		_, err := orch.CreatePipeline(ctx, &PipelineConfig{
+		_, err := orch.CreatePipeline(ctx, &model.PipelineCreateRequest{
 			Name:        fmt.Sprintf("deploy-%s", tag),
-			Mode:        "serial",
+			Mode:        model.ModeSerial,
 			Description: "Triggered by GitHub release",
-			Steps: []PipelineStep{
+			Steps: []model.Step{
 				{ID: "build-image", CLI: "docker", Action: "build"},
 				{ID: "push-image", CLI: "docker", Action: "push"},
 				{ID: "deploy", CLI: "kubectl", Action: "apply"},
@@ -199,11 +201,11 @@ func handleGitLabPush(ctx context.Context, payload map[string]interface{}, taskS
 		project, _ := payload["project"].(map[string]interface{})
 		projectName, _ := project["name"].(string)
 
-		_, err := orch.CreatePipeline(ctx, &PipelineConfig{
+		_, err := orch.CreatePipeline(ctx, &model.PipelineCreateRequest{
 			Name:        fmt.Sprintf("gitlab-ci-%s-%d", projectName, time.Now().Unix()),
-			Mode:        "serial",
+			Mode:        model.ModeSerial,
 			Description: "Triggered by GitLab push",
-			Steps: []PipelineStep{
+			Steps: []model.Step{
 				{ID: "sync-skills", CLI: "claude", Action: "sync"},
 			},
 		})
@@ -219,9 +221,9 @@ func handleGitLabMR(ctx context.Context, payload map[string]interface{}, taskSvc
 	if action == "open" || action == "update" {
 		iid, _ := attrs["iid"].(float64)
 
-		_, err := taskSvc.CreateTask(ctx, &TaskConfig{
+		_, err := taskSvc.CreateTask(ctx, &model.TaskCreateRequest{
 			SkillID: "code-review",
-			Params: map[string]interface{}{
+			Parameters: map[string]interface{}{
 				"target": fmt.Sprintf("mr-%d", int(iid)),
 				"depth":  "standard",
 			},
@@ -237,9 +239,9 @@ func handleGitLabPipeline(ctx context.Context, payload map[string]interface{}, t
 
 	if status == "failed" {
 		// Create notification task
-		_, err := taskSvc.CreateTask(ctx, &TaskConfig{
+		_, err := taskSvc.CreateTask(ctx, &model.TaskCreateRequest{
 			SkillID: "notify",
-			Params: map[string]interface{}{
+			Parameters: map[string]interface{}{
 				"type":    "pipeline_failure",
 				"message": "GitLab pipeline failed",
 			},
@@ -271,11 +273,11 @@ func handleSlackPipeline(ctx context.Context, payload map[string]interface{}, or
 	// Parse command: /pipeline run <name>
 	// For simplicity, just trigger a pipeline
 	if text == "run" || text == "" {
-		_, err := orch.CreatePipeline(ctx, &PipelineConfig{
+		_, err := orch.CreatePipeline(ctx, &model.PipelineCreateRequest{
 			Name:        fmt.Sprintf("slack-triggered-%d", time.Now().Unix()),
-			Mode:        "serial",
+			Mode:        model.ModeSerial,
 			Description: "Triggered from Slack",
-			Steps: []PipelineStep{
+			Steps: []model.Step{
 				{ID: "run", CLI: "claude", Action: "review"},
 			},
 		})
@@ -287,9 +289,9 @@ func handleSlackPipeline(ctx context.Context, payload map[string]interface{}, or
 func handleSlackTask(ctx context.Context, payload map[string]interface{}, taskSvc *TaskService) error {
 	text, _ := payload["text"].(string)
 
-	_, err := taskSvc.CreateTask(ctx, &TaskConfig{
+	_, err := taskSvc.CreateTask(ctx, &model.TaskCreateRequest{
 		SkillID: "code-review",
-		Params: map[string]interface{}{
+		Parameters: map[string]interface{}{
 			"target": text,
 		},
 	})

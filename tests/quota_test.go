@@ -9,7 +9,7 @@ import (
 
 // Quota Service Tests
 
-func TestQuotaService_New(t *testing.T) {
+func TestQuotaBasic_New(t *testing.T) {
 	qs := service.NewQuotaService()
 	if qs == nil {
 		t.Fatal("Expected non-nil quota service")
@@ -268,7 +268,7 @@ func TestQuotaService_CheckLimit(t *testing.T) {
 	}
 }
 
-func TestQuotaService_GetUsage(t *testing.T) {
+func TestQuotaBasic_GetUsage(t *testing.T) {
 	qs := service.NewQuotaService()
 
 	quota := &service.Quota{
@@ -343,7 +343,7 @@ func TestQuotaService_SetAlertThreshold(t *testing.T) {
 	}
 }
 
-func TestQuotaService_GetStats(t *testing.T) {
+func TestQuotaBasic_GetStats(t *testing.T) {
 	qs := service.NewQuotaService()
 
 	qs.Create(&service.Quota{

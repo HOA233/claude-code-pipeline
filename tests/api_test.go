@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"bytes"
@@ -35,17 +35,18 @@ func setupTestServer(t *testing.T) (*gin.Engine, *repository.RedisClient) {
 	skillSvc := service.NewSkillService(redisClient, config.GitLabConfig{})
 	taskSvc := service.NewTaskService(redisClient)
 	executor := service.NewCLIExecutor(redisClient, config.CLIConfig{})
+	orchestrator := service.NewOrchestrator(redisClient, executor)
 
 	// Sync skills for tests
 	skillSvc.SyncFromGitLab(ctx)
 
 	router := gin.New()
-	api.SetupRoutes(router, skillSvc, taskSvc, executor)
+	api.SetupRoutes(router, skillSvc, taskSvc, executor, orchestrator, redisClient)
 
 	return router, redisClient
 }
 
-func TestListSkills(t *testing.T) {
+func TestAPIListSkills(t *testing.T) {
 	router, _ := setupTestServer(t)
 
 	req, _ := http.NewRequest("GET", "/api/skills", nil)
@@ -114,7 +115,7 @@ func TestGetTaskNotFound(t *testing.T) {
 	}
 }
 
-func TestStatusEndpoint(t *testing.T) {
+func TestAPIStatusEndpoint(t *testing.T) {
 	router, _ := setupTestServer(t)
 
 	req, _ := http.NewRequest("GET", "/api/status", nil)

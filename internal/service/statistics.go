@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"sync"
 	"time"
 
@@ -333,10 +334,13 @@ func formatDuration(d time.Duration) string {
 func getSystemInfo() SystemInfo {
 	// In a real implementation, use runtime package
 	return SystemInfo{
-		GoVersion:    "go1.22",
-		NumGoroutine: 10, // runtime.NumGoroutine()
-		MemAllocMB:   64,
-		MemTotalMB:   128,
-		CPUUsage:     "low",
+		GoVersion:    runtime.Version(),
+		OS:           runtime.GOOS,
+		Arch:         runtime.GOARCH,
+		NumCPU:       runtime.NumCPU(),
+		NumGoroutine: runtime.NumGoroutine(),
+		MemAllocMB:   0,
+		MemTotalMB:   0,
+		MemSysMB:     0,
 	}
 }

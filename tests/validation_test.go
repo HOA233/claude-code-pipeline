@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"encoding/json"
@@ -103,8 +103,8 @@ func TestSkillValidation(t *testing.T) {
 	}
 }
 
-// TestPipelineValidation tests pipeline definition validation
-func TestPipelineValidation(t *testing.T) {
+// TestValidation_Pipeline tests pipeline definition validation
+func TestValidation_Pipeline(t *testing.T) {
 	tests := []struct {
 		name      string
 		pipeline  map[string]interface{}

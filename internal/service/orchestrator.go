@@ -11,6 +11,7 @@ import (
 	"github.com/company/claude-pipeline/internal/repository"
 	"github.com/company/claude-pipeline/pkg/logger"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 // Orchestrator manages pipeline execution
@@ -74,7 +75,7 @@ func (o *Orchestrator) DeletePipeline(ctx context.Context, id string) error {
 
 // RunPipeline executes a pipeline
 func (o *Orchestrator) RunPipeline(ctx context.Context, req *model.RunCreateRequest) (*model.Run, error) {
-	pipeline, err := o.redis.GetPipeline(ctx, req.PipelineID)
+	_, err := o.redis.GetPipeline(ctx, req.PipelineID)
 	if err != nil {
 		return nil, fmt.Errorf("pipeline not found: %s", req.PipelineID)
 	}
@@ -415,6 +416,6 @@ func (o *Orchestrator) failRun(ctx context.Context, run *model.Run, errMsg strin
 }
 
 // SubscribeRunUpdates subscribes to run updates
-func (o *Orchestrator) SubscribeRunUpdates(ctx context.Context, runID string) interface{} {
+func (o *Orchestrator) SubscribeRunUpdates(ctx context.Context, runID string) *redis.PubSub {
 	return o.redis.SubscribeRunUpdates(ctx, runID)
 }

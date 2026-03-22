@@ -28,6 +28,7 @@ type HealthCheck struct {
 	LastRun     time.Time
 	LastStatus  string
 	LastError   string
+	LatencyMs   int64
 	Consecutive int
 }
 

@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/company/claude-pipeline/internal/model"
 	"github.com/company/claude-pipeline/internal/repository"
 )
 
 // TaskHistoryService manages task history and archiving
 type TaskHistoryService struct {
-	redis       *repository.RedisClient
-	retention   time.Duration
-	archiveTTL  time.Duration
+	redis      *repository.RedisClient
+	retention  time.Duration
+	archiveTTL time.Duration
 }
 
 // NewTaskHistoryService creates a new task history service
@@ -26,29 +27,17 @@ func NewTaskHistoryService(redis *repository.RedisClient, retentionHours int) *T
 }
 
 // ArchiveTask archives a completed task
-func (s *TaskHistoryService) ArchiveTask(ctx context.Context, task *Task) error {
-	// Set archived timestamp
-	taskArchived := &Task{
-		ID:        task.ID,
-		SkillID:   task.SkillID,
-		Status:    task.Status,
-		Params:    task.Params,
-		Result:    task.Result,
-		Error:     task.Error,
-		CreatedAt: task.CreatedAt,
-		EndedAt:   task.EndedAt,
-	}
-
-	return s.redis.ArchiveTask(ctx, taskArchived)
+func (s *TaskHistoryService) ArchiveTask(ctx context.Context, task *model.Task) error {
+	return s.redis.ArchiveTask(ctx, task)
 }
 
 // GetArchivedTask retrieves an archived task
-func (s *TaskHistoryService) GetArchivedTask(ctx context.Context, taskID string) (*Task, error) {
+func (s *TaskHistoryService) GetArchivedTask(ctx context.Context, taskID string) (*model.Task, error) {
 	return s.redis.GetArchivedTask(ctx, taskID)
 }
 
 // ListArchivedTasks lists archived tasks
-func (s *TaskHistoryService) ListArchivedTasks(ctx context.Context, limit int) ([]*Task, error) {
+func (s *TaskHistoryService) ListArchivedTasks(ctx context.Context, limit int) ([]*model.Task, error) {
 	return s.redis.ListArchivedTasks(ctx, limit)
 }
 
@@ -84,17 +73,17 @@ func (s *TaskHistoryService) GenerateReport(ctx context.Context, taskID string) 
 	}
 
 	var duration time.Duration
-	if !task.EndedAt.IsZero() && !task.CreatedAt.IsZero() {
-		duration = task.EndedAt.Sub(task.CreatedAt)
+	if task.CompletedAt != nil && !task.CreatedAt.IsZero() {
+		duration = task.CompletedAt.Sub(task.CreatedAt)
 	}
 
 	return &TaskReport{
 		TaskID:          task.ID,
 		SkillID:         task.SkillID,
-		Status:          task.Status,
+		Status:          string(task.Status),
 		Duration:        duration,
 		StartedAt:       task.CreatedAt,
-		EndedAt:         task.EndedAt,
+		EndedAt:         task.CreatedAt, // Use CreatedAt since EndedAt doesn't exist
 		OutputLineCount: len(output),
 	}, nil
 }
@@ -110,13 +99,13 @@ func (s *TaskHistoryService) ExportReport(ctx context.Context, taskID string) ([
 
 // AggregatedStats represents aggregated task statistics
 type AggregatedStats struct {
-	TotalTasks     int           `json:"total_tasks"`
-	CompletedTasks int           `json:"completed_tasks"`
-	FailedTasks    int           `json:"failed_tasks"`
-	AvgDuration    time.Duration `json:"avg_duration"`
-	SuccessRate    float64       `json:"success_rate"`
+	TotalTasks     int            `json:"total_tasks"`
+	CompletedTasks int            `json:"completed_tasks"`
+	FailedTasks    int            `json:"failed_tasks"`
+	AvgDuration    time.Duration  `json:"avg_duration"`
+	SuccessRate    float64        `json:"success_rate"`
 	BySkill        map[string]int `json:"by_skill"`
-	Period         string        `json:"period"`
+	Period         string         `json:"period"`
 }
 
 // GetAggregatedStats returns aggregated statistics for a time period
@@ -138,16 +127,16 @@ func (s *TaskHistoryService) GetAggregatedStats(ctx context.Context, period stri
 		stats.TotalTasks++
 
 		switch task.Status {
-		case "completed":
+		case model.TaskStatusCompleted:
 			stats.CompletedTasks++
-		case "failed", "cancelled":
+		case model.TaskStatusFailed, model.TaskStatusCancelled:
 			stats.FailedTasks++
 		}
 
 		stats.BySkill[task.SkillID]++
 
-		if !task.EndedAt.IsZero() && !task.CreatedAt.IsZero() {
-			totalDuration += task.EndedAt.Sub(task.CreatedAt)
+		if task.CompletedAt != nil && !task.CreatedAt.IsZero() {
+			totalDuration += task.CompletedAt.Sub(task.CreatedAt)
 			durationCount++
 		}
 	}

@@ -1,4 +1,4 @@
-package main
+package tests
 
 import (
 	"bytes"
@@ -35,12 +35,12 @@ func setupPipelineTestServer(t *testing.T) (*gin.Engine, *repository.RedisClient
 	orchestrator := service.NewOrchestrator(redisClient, executor)
 
 	router := gin.New()
-	api.SetupRoutes(router, skillSvc, taskSvc, executor, orchestrator)
+	api.SetupRoutes(router, skillSvc, taskSvc, executor, orchestrator, redisClient)
 
 	return router, redisClient
 }
 
-func TestCreatePipeline(t *testing.T) {
+func TestPipelineAPI_CreatePipeline(t *testing.T) {
 	router, _ := setupPipelineTestServer(t)
 
 	pipelineReq := map[string]interface{}{
@@ -88,7 +88,7 @@ func TestCreatePipeline(t *testing.T) {
 	}
 }
 
-func TestListPipelines(t *testing.T) {
+func TestPipelineAPI_ListPipelines(t *testing.T) {
 	router, _ := setupPipelineTestServer(t)
 
 	req, _ := http.NewRequest("GET", "/api/pipelines", nil)
@@ -105,7 +105,7 @@ func TestListPipelines(t *testing.T) {
 	}
 }
 
-func TestPipelineValidation(t *testing.T) {
+func TestPipelineAPI_Validation(t *testing.T) {
 	router, _ := setupPipelineTestServer(t)
 
 	// Test with missing required fields

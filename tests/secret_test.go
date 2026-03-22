@@ -9,7 +9,7 @@ import (
 
 // Secret Service Tests
 
-func TestSecretService_New(t *testing.T) {
+func TestSecretBasic_New(t *testing.T) {
 	ss := service.NewSecretService()
 	if ss == nil {
 		t.Fatal("Expected non-nil secret service")

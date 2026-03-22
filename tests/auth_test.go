@@ -9,7 +9,7 @@ import (
 
 // Auth Service Tests
 
-func TestAuthService_New(t *testing.T) {
+func TestAuthBasic_New(t *testing.T) {
 	as := service.NewAuthService()
 	if as == nil {
 		t.Fatal("Expected non-nil auth service")
@@ -76,7 +76,7 @@ func TestAuthService_Logout(t *testing.T) {
 	}
 }
 
-func TestAuthService_ValidateSession(t *testing.T) {
+func TestAuthBasic_ValidateSession(t *testing.T) {
 	as := service.NewAuthService()
 
 	user := &service.User{
@@ -98,7 +98,7 @@ func TestAuthService_ValidateSession(t *testing.T) {
 	}
 }
 
-func TestAuthService_ValidateSession_Invalid(t *testing.T) {
+func TestAuthBasic_ValidateSession_Invalid(t *testing.T) {
 	as := service.NewAuthService()
 
 	_, err := as.ValidateSession("invalid-token")

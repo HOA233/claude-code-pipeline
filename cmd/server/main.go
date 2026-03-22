@@ -50,7 +50,7 @@ func main() {
 	go orchestrator.StartConsumer(context.Background())
 
 	// Start HTTP server
-	server := api.NewServer(cfg, skillService, taskService, executor, orchestrator)
+	server := api.NewServer(cfg, skillService, taskService, executor, orchestrator, redisClient)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)

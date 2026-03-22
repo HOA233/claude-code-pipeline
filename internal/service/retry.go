@@ -191,6 +191,7 @@ func (e *RetryExecutor) ExecuteWithDetails(fn func() (interface{}, error)) *Retr
 
 	result.TotalTime = time.Since(start)
 	result.LastDelay = lastDelay
+	_ = lastErr // Track last error for potential use
 	return result
 }
 

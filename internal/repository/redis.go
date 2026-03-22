@@ -586,3 +586,37 @@ func (r *RedisClient) ListWorkspaceKeys(ctx context.Context) ([]string, error) {
 	}
 	return result, nil
 }
+
+// ==================== Additional Helper Methods ====================
+
+// ListCacheKeys lists all cache keys matching a pattern
+func (r *RedisClient) ListCacheKeys(ctx context.Context, pattern string) ([]string, error) {
+	return r.client.Keys(ctx, pattern).Result()
+}
+
+// Get is an alias for GetCache
+func (r *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
+	return r.GetCache(ctx, key)
+}
+
+// Set is an alias for SetCache
+func (r *RedisClient) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	return r.SetCache(ctx, key, value, ttl)
+}
+
+// Delete is an alias for DeleteCache
+func (r *RedisClient) Delete(ctx context.Context, key string) error {
+	return r.DeleteCache(ctx, key)
+}
+
+// DeleteByPattern deletes all keys matching a pattern
+func (r *RedisClient) DeleteByPattern(ctx context.Context, pattern string) error {
+	keys, err := r.client.Keys(ctx, pattern).Result()
+	if err != nil {
+		return err
+	}
+	if len(keys) == 0 {
+		return nil
+	}
+	return r.client.Del(ctx, keys...).Err()
+}

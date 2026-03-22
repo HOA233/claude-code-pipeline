@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/company/claude-pipeline/internal/repository"
 )
 
 // MetricsCollector collects and aggregates metrics
@@ -228,7 +230,7 @@ func (m *MetricsMiddleware) UpdateActiveTasks(count int) {
 func (m *MetricsCollector) RecordToRedis(ctx context.Context, redis *repository.RedisClient) error {
 	metrics := m.AllMetrics()
 
-	for name, value := range metrics["counters"].(map[string]int64) {
+	for name := range metrics["counters"].(map[string]int64) {
 		redis.IncrementCounter(ctx, name)
 	}
 

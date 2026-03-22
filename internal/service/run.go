@@ -295,17 +295,17 @@ func (s *RunService) executeParallel(ctx context.Context, run *model.Run, pipeli
 
 	for i, step := range pipeline.Steps {
 		wg.Add(1)
-		go func(idx int, s model.Step) {
+		go func(idx int, st model.Step) {
 			defer wg.Done()
 
-			result := s.executeStep(ctx, s, session)
+			result := s.executeStep(ctx, st, session)
 
 			resultsMu.Lock()
 			results[idx] = result
 			resultsMu.Unlock()
 
-			if result.Status == model.RunStatusFailed && s.OnError == model.ErrorStop {
-				errChan <- fmt.Errorf("step %s failed: %s", s.ID, result.Error)
+			if result.Status == model.RunStatusFailed && st.OnError == model.ErrorStop {
+				errChan <- fmt.Errorf("step %s failed: %s", st.ID, result.Error)
 			}
 		}(i, step)
 	}
@@ -363,16 +363,16 @@ func (s *RunService) executeHybrid(ctx context.Context, run *model.Run, pipeline
 		var wg sync.WaitGroup
 		for _, step := range ready {
 			wg.Add(1)
-			go func(s model.Step) {
+			go func(st model.Step) {
 				defer wg.Done()
 
-				result := s.executeStep(ctx, s, session)
+				result := s.executeStep(ctx, st, session)
 				run.StepResults = append(run.StepResults, result)
 
 				mu.Lock()
-				completed[s.ID] = true
+				completed[st.ID] = true
 				// Update dependency counts
-				for _, dep := range dependents[s.ID] {
+				for _, dep := range dependents[st.ID] {
 					dependencies[dep]--
 				}
 				mu.Unlock()
@@ -383,7 +383,7 @@ func (s *RunService) executeHybrid(ctx context.Context, run *model.Run, pipeline
 					"run-service",
 					run.ID,
 					map[string]interface{}{
-						"step_id": s.ID,
+						"step_id": st.ID,
 						"status":  result.Status,
 					},
 				))
