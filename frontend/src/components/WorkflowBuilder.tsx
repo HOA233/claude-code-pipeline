@@ -128,6 +128,50 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
     setSelectedNode(null);
   };
 
+  const handleExport = () => {
+    const config = {
+      name,
+      description,
+      mode,
+      nodes,
+      connections,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `workflow-${name || 'config'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const config = JSON.parse(event.target?.result as string);
+          if (config.name) setName(config.name);
+          if (config.description) setDescription(config.description);
+          if (config.mode) setMode(config.mode);
+          if (config.nodes) setNodes(config.nodes);
+          if (config.connections) setConnections(config.connections);
+        } catch (err) {
+          alert('导入失败：无效的配置文件');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
   return (
     <div className="workflow-builder">
       <div className="builder-sidebar">
@@ -166,6 +210,12 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({
             </select>
           </div>
           <div className="toolbar-right">
+            <button onClick={handleImport} className="btn-secondary">
+              导入配置
+            </button>
+            <button onClick={handleExport} className="btn-secondary">
+              导出配置
+            </button>
             <button onClick={clearCanvas} className="btn-secondary">
               清空画布
             </button>

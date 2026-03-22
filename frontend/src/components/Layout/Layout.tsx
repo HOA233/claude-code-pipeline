@@ -1,19 +1,29 @@
-import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { NotificationCenter } from '../NotificationCenter'
+import { GlobalSearch } from '../GlobalSearch'
+import { KeyboardShortcuts } from '../KeyboardShortcuts'
+import { CommandPalette } from '../CommandPalette'
 import './Layout.css'
 
 const Layout = ({ children }) => {
   const location = useLocation()
+  const navigate = useNavigate()
+  const [showCommandPalette, setShowCommandPalette] = useState(false)
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: '🏠' },
     { path: '/agents', label: 'Agents', icon: '🤖' },
     { path: '/workflows', label: 'Workflows', icon: '🔄' },
-    { path: '/executions', label: 'Executions', icon: '📋' },
+    { path: '/presets', label: 'Presets', icon: '📦' },
+    { path: '/templates', label: 'Templates', icon: '📋' },
+    { path: '/executions', label: 'Executions', icon: '📊' },
     { path: '/schedules', label: 'Schedules', icon: '⏰' },
-    { path: '/skills', label: 'Skills', icon: '⚡' },
-    { path: '/tasks', label: 'Tasks', icon: '📝' },
-    { path: '/pipelines', label: 'Pipelines', icon: '🔗' },
+    { path: '/webhooks', label: 'Webhooks', icon: '🔔' },
+    { path: '/quotas', label: 'Quotas', icon: '📈' },
+    { path: '/audit-logs', label: 'Audit Logs', icon: '📜' },
+    { path: '/diagnostics', label: 'Diagnostics', icon: '💊' },
+    { path: '/help', label: 'Help', icon: '❓' },
     { path: '/settings', label: 'Settings', icon: '⚙️' },
   ]
 
@@ -41,6 +51,9 @@ const Layout = ({ children }) => {
         </div>
 
         <nav className="sidebar-nav">
+          <div className="search-section">
+            <GlobalSearch />
+          </div>
           {navItems.map((item) => (
             <Link
               key={item.path}
@@ -54,6 +67,7 @@ const Layout = ({ children }) => {
         </nav>
 
         <div className="sidebar-footer">
+          <NotificationCenter />
           <div className="status-indicator">
             <span className="status-dot"></span>
             <span className="status-text">System Online</span>
@@ -64,6 +78,23 @@ const Layout = ({ children }) => {
       <main className="main-content">
         {children}
       </main>
+
+      <KeyboardShortcuts
+        onNavigate={(path) => navigate(path)}
+        onRefresh={() => window.location.reload()}
+        onSearch={() => {
+          const searchInput = document.querySelector('.global-search-input') as HTMLInputElement;
+          if (searchInput) searchInput.focus();
+        }}
+        onCreateNew={() => setShowCommandPalette(true)}
+        onCommandPalette={() => setShowCommandPalette(true)}
+      />
+
+      <CommandPalette
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        onRefresh={() => window.location.reload()}
+      />
     </div>
   )
 }

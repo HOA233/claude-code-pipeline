@@ -283,3 +283,38 @@ export interface PaginatedResponse<T> {
   page: number;
   page_size: number;
 }
+
+// Webhook Types
+export interface Webhook {
+  id: string;
+  name: string;
+  url: string;
+  events: string[];
+  enabled: boolean;
+  secret?: string;
+  created_at: string;
+  updated_at: string;
+  last_triggered?: string;
+  delivery_count: number;
+  tenant_id?: string;
+}
+
+export interface WebhookCreateRequest {
+  name: string;
+  url: string;
+  events: string[];
+  secret?: string;
+  enabled?: boolean;
+}
+
+export interface WebhookDelivery {
+  id: string;
+  webhook_id: string;
+  event: string;
+  status: number;
+  duration: number;
+  timestamp: string;
+  request?: any;
+  response?: any;
+  error?: string;
+}

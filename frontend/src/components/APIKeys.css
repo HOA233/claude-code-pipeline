@@ -1,0 +1,357 @@
+.api-keys {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.keys-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.keys-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.btn-create {
+  padding: 8px 16px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.btn-create:hover {
+  opacity: 0.9;
+}
+
+/* Generated Key Banner */
+.generated-key-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(82, 196, 26, 0.1);
+  border-bottom: 1px solid rgba(82, 196, 26, 0.3);
+}
+
+.banner-content strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #52c41a;
+}
+
+.banner-content p {
+  margin: 0 0 8px 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.generated-key-value {
+  display: block;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  font-family: monospace;
+  font-size: 0.875rem;
+}
+
+.banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.banner-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.banner-actions button:first-child {
+  background: var(--color-primary);
+  color: white;
+}
+
+.banner-actions button:last-child {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Keys List */
+.keys-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.key-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.key-item:last-child {
+  border-bottom: none;
+}
+
+.key-item.admin {
+  background: rgba(250, 173, 20, 0.05);
+}
+
+.key-info {
+  flex: 1;
+}
+
+.key-name {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-badge {
+  padding: 2px 8px;
+  background: rgba(250, 173, 20, 0.15);
+  color: #faad14;
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.key-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.key-value code {
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  font-family: monospace;
+  font-size: 0.8125rem;
+}
+
+.btn-copy {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.btn-copy:hover {
+  background: var(--bg-elevated);
+}
+
+.key-permissions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.permission-tag {
+  padding: 2px 8px;
+  background: rgba(24, 144, 255, 0.15);
+  color: #1890ff;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+}
+
+.key-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.key-actions {
+  display: flex;
+  align-items: flex-start;
+}
+
+.btn-delete {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #f5222d;
+  color: #f5222d;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.8125rem;
+}
+
+.btn-delete:hover {
+  background: rgba(245, 34, 45, 0.1);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 500px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.modal-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.permission-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.permission-checkbox input {
+  width: auto;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-default);
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.btn-primary {
+  padding: 10px 20px;
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+@media (max-width: 600px) {
+  .generated-key-banner {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .banner-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .banner-actions button {
+    flex: 1;
+  }
+
+  .key-item {
+    flex-direction: column;
+  }
+
+  .key-actions {
+    align-self: flex-end;
+  }
+
+  .permissions-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -73,3 +73,238 @@
   grid-template-columns: 1fr;
   margin-top: 24px;
 }
+
+/* Dashboard Header with Actions */
+.dashboard .dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.dashboard .header-left h1 {
+  margin: 0 0 4px 0;
+  font-size: 1.5rem;
+}
+
+.dashboard .header-left p {
+  margin: 0;
+  color: var(--text-secondary, #999);
+}
+
+.dashboard .header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.view-toggle {
+  display: flex;
+  background: var(--bg-tertiary, #222);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.toggle-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary, #999);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn.active {
+  background: var(--color-primary, #D97706);
+  color: white;
+}
+
+.toggle-btn:hover:not(.active) {
+  color: var(--text-primary, #fff);
+}
+
+.btn-refresh {
+  padding: 8px 16px;
+  background: var(--bg-tertiary, #252525);
+  border: 1px solid var(--border-default, #333);
+  border-radius: 8px;
+  color: var(--text-secondary, #ccc);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-refresh:hover {
+  background: var(--bg-elevated, #333);
+  color: var(--text-primary, #fff);
+}
+
+/* Stats Grid */
+.dashboard .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dashboard .stat-card {
+  background: var(--bg-card, #1a1a1a);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard .stat-card .stat-icon {
+  font-size: 1.5rem;
+}
+
+.dashboard .stat-card .stat-content .stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.dashboard .stat-card .stat-content .stat-label {
+  font-size: 0.875rem;
+  color: var(--text-tertiary, #999);
+}
+
+.dashboard .stat-card .stat-breakdown {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8125rem;
+  flex-wrap: wrap;
+}
+
+/* Recent Executions */
+.recent-executions {
+  background: var(--bg-card, #1a1a1a);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.recent-executions h2 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+}
+
+.recent-executions .execution-table {
+  overflow-x: auto;
+}
+
+.recent-executions table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.recent-executions th,
+.recent-executions td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle, #222);
+}
+
+.recent-executions th {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-tertiary, #666);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.recent-executions td {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #ccc);
+}
+
+.recent-executions tr:hover td {
+  background: var(--bg-tertiary, #222);
+  cursor: pointer;
+}
+
+.status-icon {
+  font-size: 0.875rem;
+  margin-right: 8px;
+}
+
+.status-text {
+  font-size: 0.8125rem;
+}
+
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-tertiary, #333);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary, #D97706);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: var(--text-tertiary, #999);
+  min-width: 36px;
+}
+
+.recent-executions .empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-tertiary, #666);
+}
+
+/* Activity View */
+.activity-view {
+  margin-bottom: 24px;
+}
+
+/* Loading State */
+.dashboard.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.loading-content {
+  color: var(--text-tertiary, #666);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .dashboard .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .dashboard .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

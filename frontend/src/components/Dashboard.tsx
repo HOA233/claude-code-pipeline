@@ -250,19 +250,51 @@ export const Dashboard: React.FC = () => {
         <div className="actions-grid">
           <button className="action-btn" onClick={() => window.location.href = '/agents'}>
             <span className="icon">🤖</span>
-            <span>管理 Agent</span>
+            <span>Agent 管理</span>
           </button>
           <button className="action-btn" onClick={() => window.location.href = '/workflows'}>
             <span className="icon">🔄</span>
-            <span>管理工作流</span>
+            <span>工作流编排</span>
+          </button>
+          <button className="action-btn" onClick={() => window.location.href = '/presets'}>
+            <span className="icon">📦</span>
+            <span>预设配置</span>
+          </button>
+          <button className="action-btn" onClick={() => window.location.href = '/templates'}>
+            <span className="icon">📋</span>
+            <span>模板库</span>
           </button>
           <button className="action-btn" onClick={() => window.location.href = '/executions'}>
-            <span className="icon">📋</span>
-            <span>查看执行</span>
+            <span className="icon">📊</span>
+            <span>执行监控</span>
           </button>
           <button className="action-btn" onClick={() => window.location.href = '/schedules'}>
             <span className="icon">⏰</span>
             <span>定时任务</span>
+          </button>
+          <button className="action-btn" onClick={() => window.location.href = '/webhooks'}>
+            <span className="icon">🔔</span>
+            <span>Webhooks</span>
+          </button>
+          <button className="action-btn" onClick={() => window.location.href = '/quotas'}>
+            <span className="icon">📈</span>
+            <span>配额成本</span>
+          </button>
+          <button className="action-btn" onClick={() => window.location.href = '/audit-logs'}>
+            <span className="icon">📜</span>
+            <span>审计日志</span>
+          </button>
+          <button className="action-btn" onClick={() => window.location.href = '/diagnostics'}>
+            <span className="icon">💊</span>
+            <span>系统诊断</span>
+          </button>
+          <button className="action-btn" onClick={() => window.location.href = '/help'}>
+            <span className="icon">❓</span>
+            <span>帮助中心</span>
+          </button>
+          <button className="action-btn" onClick={() => window.location.href = '/settings'}>
+            <span className="icon">⚙️</span>
+            <span>系统设置</span>
           </button>
         </div>
       </div>

@@ -13,6 +13,9 @@ import type {
   ScheduledJob,
   ScheduledJobCreateRequest,
   JobExecutionHistory,
+  Webhook,
+  WebhookCreateRequest,
+  WebhookDelivery,
 } from './types';
 
 const API_BASE = '/api';
@@ -264,16 +267,16 @@ class APIClient {
 
   // ==================== Webhook API ====================
 
-  async createWebhook(data: any): Promise<any> {
+  async createWebhook(data: WebhookCreateRequest): Promise<Webhook> {
     return this.request('POST', '/webhooks', data);
   }
 
-  async getWebhook(id: string): Promise<any> {
+  async getWebhook(id: string): Promise<Webhook> {
     return this.request('GET', `/webhooks/${id}`);
   }
 
   async listWebhooks(params?: { tenant_id?: string }): Promise<{
-    webhooks: any[];
+    webhooks: Webhook[];
     total: number;
   }> {
     const query = new URLSearchParams();
@@ -281,7 +284,7 @@ class APIClient {
     return this.request('GET', `/webhooks?${query}`);
   }
 
-  async updateWebhook(id: string, data: any): Promise<any> {
+  async updateWebhook(id: string, data: Partial<WebhookCreateRequest>): Promise<Webhook> {
     return this.request('PUT', `/webhooks/${id}`, data);
   }
 
@@ -289,7 +292,10 @@ class APIClient {
     return this.request('DELETE', `/webhooks/${id}`);
   }
 
-  async getWebhookDeliveries(id: string, limit?: number): Promise<any> {
+  async getWebhookDeliveries(id: string, limit?: number): Promise<{
+    deliveries: WebhookDelivery[];
+    total: number;
+  }> {
     const query = limit ? `?limit=${limit}` : '';
     return this.request('GET', `/webhooks/${id}/deliveries${query}`);
   }
@@ -355,6 +361,116 @@ class APIClient {
 
   async instantiateTemplate(id: string, name: string): Promise<any> {
     return this.request('POST', `/templates/${id}/instantiate`, { name });
+  }
+
+  // ==================== Quota & Cost API ====================
+
+  async getQuotas(): Promise<{
+    quotas: any[];
+    total: number;
+  }> {
+    return this.request('GET', '/quotas');
+  }
+
+  async getQuotaSummary(): Promise<{
+    quotas: any[];
+    total_cost: number;
+    total_tokens: number;
+    total_tokens_in: number;
+    total_tokens_out: number;
+    execution_count: number;
+    usage_percentages: Record<string, number>;
+  }> {
+    return this.request('GET', '/quotas/summary');
+  }
+
+  async updateQuota(id: string, limit: number): Promise<any> {
+    return this.request('PUT', `/quotas/${id}`, { limit });
+  }
+
+  async getCosts(timeRange?: 'today' | 'week' | 'month'): Promise<{
+    costs: any[];
+    total: number;
+    summary: {
+      total_cost: number;
+      total_tokens_input: number;
+      total_tokens_output: number;
+    };
+  }> {
+    const query = timeRange ? `?range=${timeRange}` : '';
+    return this.request('GET', `/costs${query}`);
+  }
+
+  // ==================== Audit Log API ====================
+
+  async listAuditLogs(params?: {
+    action?: string;
+    resource?: string;
+    actor?: string;
+  }): Promise<{
+    logs: any[];
+    total: number;
+  }> {
+    const query = new URLSearchParams();
+    if (params?.action) query.set('action', params.action);
+    if (params?.resource) query.set('resource', params.resource);
+    if (params?.actor) query.set('actor', params.actor);
+    return this.request('GET', `/audit-logs?${query}`);
+  }
+
+  async getAuditLog(id: string): Promise<any> {
+    return this.request('GET', `/audit-logs/${id}`);
+  }
+
+  async exportAuditLogs(format?: 'json' | 'csv'): Promise<void> {
+    const query = format ? `?format=${format}` : '';
+    window.open(`${this.baseUrl}/audit-logs/export${query}`, '_blank');
+  }
+
+  async getAuditStats(): Promise<Record<string, number>> {
+    return this.request('GET', '/audit-logs/stats');
+  }
+
+  // ==================== User Preferences API ====================
+
+  async getPreferences(): Promise<any> {
+    return this.request('GET', '/preferences');
+  }
+
+  async updatePreferences(prefs: any): Promise<any> {
+    return this.request('PUT', '/preferences', prefs);
+  }
+
+  async updateTheme(theme: string): Promise<any> {
+    return this.request('PUT', '/preferences/theme', { theme });
+  }
+
+  async updateNotifications(notifications: any): Promise<any> {
+    return this.request('PUT', '/preferences/notifications', notifications);
+  }
+
+  async updateDashboard(dashboard: any): Promise<any> {
+    return this.request('PUT', '/preferences/dashboard', dashboard);
+  }
+
+  async exportPreferences(): Promise<any> {
+    return this.request('GET', '/preferences/export');
+  }
+
+  async importPreferences(prefs: any): Promise<any> {
+    return this.request('POST', '/preferences/import', { preferences: prefs });
+  }
+
+  async resetPreferences(): Promise<any> {
+    return this.request('DELETE', '/preferences');
+  }
+
+  async getShortcuts(): Promise<{ shortcuts: Record<string, string> }> {
+    return this.request('GET', '/preferences/shortcuts');
+  }
+
+  async updateShortcuts(shortcuts: Record<string, string>): Promise<any> {
+    return this.request('PUT', '/preferences/shortcuts', shortcuts);
   }
 }
 

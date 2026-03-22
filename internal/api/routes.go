@@ -103,6 +103,9 @@ func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *
 	webhookHandler := NewWebhookHandler(webhookSvc)
 	configHandler := NewConfigHandler()
 	templateHandler := NewTemplateHandler(templateSvc)
+	quotaHandler := NewQuotaHandler()
+	auditHandler := NewAuditLogHandler()
+	prefsHandler := NewUserPreferencesHandler()
 
 	api := r.Group("/api")
 	{
@@ -152,6 +155,30 @@ func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *
 		api.POST("/templates/custom", templateHandler.SaveCustomTemplate)
 		api.DELETE("/templates/custom/:id", templateHandler.DeleteCustomTemplate)
 		api.POST("/templates/:id/instantiate", templateHandler.InstantiateTemplate)
+
+		// Quotas & Costs
+		api.GET("/quotas", quotaHandler.GetQuotas)
+		api.GET("/quotas/summary", quotaHandler.GetQuotaSummary)
+		api.PUT("/quotas/:id", quotaHandler.UpdateQuota)
+		api.GET("/costs", quotaHandler.GetCosts)
+
+		// Audit Logs
+		api.GET("/audit-logs", auditHandler.ListAuditLogs)
+		api.GET("/audit-logs/:id", auditHandler.GetAuditLog)
+		api.GET("/audit-logs/export", auditHandler.ExportAuditLogs)
+		api.GET("/audit-logs/stats", auditHandler.GetAuditStats)
+
+		// User Preferences
+		api.GET("/preferences", prefsHandler.GetPreferences)
+		api.PUT("/preferences", prefsHandler.UpdatePreferences)
+		api.PUT("/preferences/theme", prefsHandler.UpdateTheme)
+		api.PUT("/preferences/notifications", prefsHandler.UpdateNotifications)
+		api.PUT("/preferences/dashboard", prefsHandler.UpdateDashboard)
+		api.GET("/preferences/export", prefsHandler.ExportPreferences)
+		api.POST("/preferences/import", prefsHandler.ImportPreferences)
+		api.DELETE("/preferences", prefsHandler.ResetPreferences)
+		api.GET("/preferences/shortcuts", prefsHandler.GetShortcuts)
+		api.PUT("/preferences/shortcuts", prefsHandler.UpdateShortcuts)
 	}
 
 	// SSE endpoints for real-time updates

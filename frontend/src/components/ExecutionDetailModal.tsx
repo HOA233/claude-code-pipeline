@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api/client';
 import type { Execution, NodeResult } from '../types';
+import { LogViewer } from './LogViewer';
 import './ExecutionDetailModal.css';
 
 interface ExecutionDetailModalProps {
@@ -215,21 +216,11 @@ export const ExecutionDetailModal: React.FC<ExecutionDetailModalProps> = ({
 
           {activeTab === 'logs' && (
             <div className="logs-tab">
-              {logs.length > 0 ? (
-                <div className="log-list">
-                  {logs.map((log, index) => (
-                    <div key={index} className={`log-entry log-${log.level}`}>
-                      <span className="log-time">
-                        {new Date(log.timestamp).toLocaleTimeString()}
-                      </span>
-                      <span className="log-level">{log.level.toUpperCase()}</span>
-                      <span className="log-message">{log.message}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-tab">暂无日志</div>
-              )}
+              <LogViewer
+                executionId={executionId}
+                maxHeight="350px"
+                autoScroll={execution.status === 'running'}
+              />
             </div>
           )}
         </div>

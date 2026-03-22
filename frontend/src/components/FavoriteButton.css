@@ -1,0 +1,51 @@
+.favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border-default, #333);
+  border-radius: 8px;
+  color: var(--text-tertiary, #999);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.favorite-btn.small {
+  padding: 4px 8px;
+  font-size: 0.875rem;
+}
+
+.favorite-btn.medium {
+  padding: 8px 12px;
+  font-size: 1rem;
+}
+
+.favorite-btn.large {
+  padding: 12px 20px;
+  font-size: 1.125rem;
+}
+
+.favorite-btn:hover {
+  background: var(--bg-tertiary, #252525);
+  color: var(--text-primary, #fff);
+}
+
+.favorite-btn.active {
+  background: rgba(250, 173, 20, 0.15);
+  border-color: #faad14;
+  color: #faad14;
+}
+
+.favorite-btn.active:hover {
+  background: rgba(250, 173, 20, 0.25);
+}
+
+.star-icon {
+  font-size: 1em;
+}
+
+.favorite-btn .label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}

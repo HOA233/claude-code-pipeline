@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/client';
 import { useToast } from '../components/Toast';
+import { APIKeys } from '../components/APIKeys';
+import { UserPreferences } from '../components/UserPreferences';
 import './Settings.css';
 
 interface SystemConfig {
@@ -141,6 +143,12 @@ function Settings() {
           常规设置
         </button>
         <button
+          className={`tab-btn ${activeTab === 'preferences' ? 'active' : ''}`}
+          onClick={() => setActiveTab('preferences')}
+        >
+          个人偏好
+        </button>
+        <button
           className={`tab-btn ${activeTab === 'features' ? 'active' : ''}`}
           onClick={() => setActiveTab('features')}
         >
@@ -151,6 +159,12 @@ function Settings() {
           onClick={() => setActiveTab('models')}
         >
           模型管理
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'apikeys' ? 'active' : ''}`}
+          onClick={() => setActiveTab('apikeys')}
+        >
+          API 密钥
         </button>
         <button
           className={`tab-btn ${activeTab === 'about' ? 'active' : ''}`}
@@ -327,6 +341,20 @@ function Settings() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'apikeys' && (
+          <div className="settings-section">
+            <APIKeys />
+          </div>
+        )}
+
+        {activeTab === 'preferences' && (
+          <div className="settings-section">
+            <h3>个人偏好</h3>
+            <p className="section-desc">自定义您的使用体验</p>
+            <UserPreferences />
           </div>
         )}
 
