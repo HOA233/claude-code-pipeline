@@ -1,3 +1,12 @@
+package api
+
+import (
+	"net/http"
+
+	"github.com/company/claude-pipeline/internal/service"
+	"github.com/gin-gonic/gin"
+)
+
 // GetStatus returns service status
 func GetStatus(executor *service.CLIExecutor, skillSvc *service.SkillService, orch *service.Orchestrator) gin.HandlerFunc {
 	return func(c *gin.Context) {
