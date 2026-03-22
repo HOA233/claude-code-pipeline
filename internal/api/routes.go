@@ -91,6 +91,29 @@ func SetupRoutesWithAgent(r *gin.Engine, skillSvc *service.SkillService, taskSvc
 	}
 }
 
+// SetupRoutesWithAll sets up all routes including scheduled jobs
+func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService) {
+	// Set up agent routes
+	SetupRoutesWithAgent(r, skillSvc, taskSvc, executor, orch, redis, agentSvc, workflowSvc)
+
+	// Initialize job handler
+	jobHandler := NewScheduledJobHandler(jobSvc)
+
+	api := r.Group("/api")
+	{
+		// Scheduled Jobs
+		api.POST("/schedules", jobHandler.CreateJob)
+		api.GET("/schedules", jobHandler.ListJobs)
+		api.GET("/schedules/:id", jobHandler.GetJob)
+		api.PUT("/schedules/:id", jobHandler.UpdateJob)
+		api.DELETE("/schedules/:id", jobHandler.DeleteJob)
+		api.POST("/schedules/:id/enable", jobHandler.EnableJob)
+		api.POST("/schedules/:id/disable", jobHandler.DisableJob)
+		api.POST("/schedules/:id/trigger", jobHandler.TriggerJob)
+		api.GET("/schedules/:id/history", jobHandler.GetJobHistory)
+	}
+}
+
 // SetupRoutesWithScheduler sets up routes including scheduler endpoints
 func SetupRoutesWithScheduler(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, schedulerSvc *service.SchedulerService) {
 	// Set up base routes

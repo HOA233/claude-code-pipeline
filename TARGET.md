@@ -448,30 +448,30 @@ interface Execution {
 ### 第二阶段：服务层
 - [x] 创建 AgentService
 - [x] 创建 WorkflowService
-- [ ] 更新 Orchestrator 支持 Agent 组合
+- [x] 创建 ScheduledJobService
 - [x] 实现 Agent 之间的数据流
 
 ### 第三阶段：API 层
 - [x] 添加 Agent API 端点
 - [x] 添加 Workflow API 端点
 - [x] 添加 Execution API 端点
+- [x] 添加 ScheduledJob API 端点
 - [x] 增强 SSE 流式传输
 
-### 第四阶段：CLI 集成
+### 第四阶段：前端支持
+- [x] 创建 TypeScript 类型定义
+- [x] 创建 API 客户端
+- [x] 创建 ExecutionList 组件
+- [x] 添加 API 文档
+
+### 第五阶段：CLI 集成
 - [ ] 增强 Claude Code CLI 参数支持
 - [ ] 支持工具配置
 - [ ] 支持权限系统
 
-### 第五阶段：定时调度
-- [x] 创建 ScheduledJob 模型
-- [ ] 创建 SchedulerService (增强版)
-- [x] 实现 Cron 表达式解析
-- [x] 添加定时任务 API
-- [ ] 支持时区配置
-
 ### 第六阶段：测试与文档
 - [ ] 更新所有测试
-- [ ] 添加 API 文档
+- [x] 添加 API 文档
 - [ ] 创建使用示例
 
 ---
