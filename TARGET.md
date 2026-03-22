@@ -172,9 +172,106 @@ DELETE /api/workflows/:id       # 删除工作流
 
 ```
 POST   /api/executions          # 触发工作流执行
+GET    /api/executions          # 列出所有执行（支持过滤）
 GET    /api/executions/:id      # 获取执行状态/结果
-POST   /api/executions/:id/cancel # 取消执行
+POST   /api/executions/:id/cancel # 取消/停止执行
+POST   /api/executions/:id/pause  # 暂停执行
+POST   /api/executions/:id/resume # 恢复执行
 GET    /api/executions/:id/stream # SSE 实时更新流
+GET    /api/executions/stream     # SSE 所有任务状态流
+```
+
+---
+
+## 前端任务管理
+
+### 任务列表展示
+前端实时展示所有任务执行状态：
+
+```typescript
+interface ExecutionList {
+  executions: Execution[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+interface Execution {
+  id: string;
+  workflow_id: string;
+  workflow_name: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'paused';
+  progress: number;           // 0-100 进度百分比
+  current_step: string;       // 当前执行步骤
+  total_steps: number;        // 总步骤数
+  completed_steps: number;    // 已完成步骤数
+  duration: number;           // 执行时长(ms)
+  created_at: string;
+  started_at?: string;
+  completed_at?: string;
+  error?: string;
+}
+```
+
+### 前端展示示例
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  任务列表                            [刷新] [停止全部运行中]   │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ▶ exec-001  code-review-workflow                            │
+│    ████████████████░░░░░░░░░░  65%  运行中                    │
+│    当前: test-gen | 已完成: 2/3 步骤 | 耗时: 45s              │
+│                                        [停止] [详情]         │
+│                                                              │
+│  ✓ exec-002  security-scan-workflow                          │
+│    ████████████████████████████  100%  已完成                 │
+│    耗时: 2m 30s | 2024-01-15 14:30                          │
+│                                        [查看结果] [重新执行]   │
+│                                                              │
+│  ✗ exec-003  deploy-workflow                                 │
+│    ████████████░░░░░░░░░░░░░░░░  40%  失败                    │
+│    错误: Step "deploy" failed: connection timeout            │
+│                                        [重试] [详情] [日志]   │
+│                                                              │
+│  ⏸ exec-004  refactor-workflow                               │
+│    ████████████████░░░░░░░░░░  50%  已暂停                    │
+│    当前: code-modifier | 已完成: 1/2 步骤                     │
+│                                        [恢复] [停止] [详情]   │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 任务控制按钮
+
+| 按钮 | 功能 | API |
+|-----|------|-----|
+| 停止 | 立即终止任务 | `POST /api/executions/:id/cancel` |
+| 暂停 | 暂停执行 | `POST /api/executions/:id/pause` |
+| 恢复 | 恢复执行 | `POST /api/executions/:id/resume` |
+| 重试 | 重试失败任务 | `POST /api/executions/:id/retry` |
+| 查看结果 | 查看执行结果 | `GET /api/executions/:id` |
+| 日志 | 查看执行日志 | `GET /api/executions/:id/logs` |
+| 停止全部 | 停止所有运行中任务 | `POST /api/executions/cancel-all?status=running` |
+
+### SSE 实时更新事件
+
+```json
+{
+  "event": "execution_update",
+  "data": {
+    "execution_id": "exec-123",
+    "status": "running",
+    "progress": 45,
+    "current_step": "code-analysis",
+    "step_status": {
+      "reviewer": "completed",
+      "test-gen": "running",
+      "validator": "pending"
+    }
+  }
+}
 ```
 
 ---
