@@ -242,6 +242,98 @@ class APIClient {
 
     return ws;
   }
+
+  // ==================== Stats & Metrics API ====================
+
+  async getSystemMetrics(): Promise<any> {
+    return this.request('GET', '/stats/system');
+  }
+
+  async getExecutionTrends(days?: number): Promise<any> {
+    const query = days ? `?days=${days}` : '';
+    return this.request('GET', `/stats/trends${query}`);
+  }
+
+  async getWorkflowStats(): Promise<any> {
+    return this.request('GET', '/stats/workflows');
+  }
+
+  async getHealthStatus(): Promise<any> {
+    return this.request('GET', '/stats/health');
+  }
+
+  // ==================== Webhook API ====================
+
+  async createWebhook(data: any): Promise<any> {
+    return this.request('POST', '/webhooks', data);
+  }
+
+  async getWebhook(id: string): Promise<any> {
+    return this.request('GET', `/webhooks/${id}`);
+  }
+
+  async listWebhooks(params?: { tenant_id?: string }): Promise<{
+    webhooks: any[];
+    total: number;
+  }> {
+    const query = new URLSearchParams();
+    if (params?.tenant_id) query.set('tenant_id', params.tenant_id);
+    return this.request('GET', `/webhooks?${query}`);
+  }
+
+  async updateWebhook(id: string, data: any): Promise<any> {
+    return this.request('PUT', `/webhooks/${id}`, data);
+  }
+
+  async deleteWebhook(id: string): Promise<void> {
+    return this.request('DELETE', `/webhooks/${id}`);
+  }
+
+  async getWebhookDeliveries(id: string, limit?: number): Promise<any> {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request('GET', `/webhooks/${id}/deliveries${query}`);
+  }
+
+  // ==================== Config API ====================
+
+  async getConfig(): Promise<any> {
+    return this.request('GET', '/config');
+  }
+
+  async updateConfig(data: any): Promise<any> {
+    return this.request('PUT', '/config', data);
+  }
+
+  async getFeatures(): Promise<any> {
+    return this.request('GET', '/config/features');
+  }
+
+  async toggleFeature(feature: string): Promise<any> {
+    return this.request('POST', `/config/features/${feature}/toggle`);
+  }
+
+  async getModels(): Promise<any> {
+    return this.request('GET', '/models');
+  }
+
+  async getCategories(): Promise<any> {
+    return this.request('GET', '/categories');
+  }
+
+  // ==================== Execution Details API ====================
+
+  async getExecutionDetails(id: string): Promise<any> {
+    return this.request('GET', `/executions/${id}/details`);
+  }
+
+  async getExecutionLogs(id: string, limit?: number): Promise<any> {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request('GET', `/executions/${id}/logs${query}`);
+  }
+
+  async retryExecution(id: string): Promise<any> {
+    return this.request('POST', `/executions/${id}/retry`);
+  }
 }
 
 export const api = new APIClient();
