@@ -47,6 +47,50 @@
   box-shadow: var(--shadow-sm);
 }
 
+.tab-btn.batch-tab {
+  background: var(--color-primary);
+  color: white;
+}
+
+.tab-btn.batch-tab:hover {
+  opacity: 0.9;
+  color: white;
+}
+
+.tab-btn.batch-tab.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* Workflows Content with Batch Panel */
+.workflows-content {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 24px;
+}
+
+.workflows-content:has(.batch-panel:hidden) {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 1024px) {
+  .workflows-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+.workflows-main {
+  min-height: 400px;
+}
+
+.batch-panel {
+  position: sticky;
+  top: 24px;
+  height: fit-content;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
 .templates-section {
   min-height: 400px;
 }

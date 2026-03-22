@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { WorkflowList } from '../components/WorkflowList'
+import { BatchExecution } from '../components/BatchExecution'
+import { useToast } from '../components/Toast'
+import type { Workflow } from '../types'
 import api from '../api/client'
 import './Workflows.css'
 
@@ -7,6 +10,9 @@ function Workflows() {
   const [activeTab, setActiveTab] = useState('workflows')
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(false)
+  const [showBatchPanel, setShowBatchPanel] = useState(false)
+  const [batchItems, setBatchItems] = useState<{ workflow_id: string; workflow_name: string }[]>([])
+  const { addToast } = useToast()
 
   useEffect(() => {
     if (activeTab === 'templates') {
@@ -21,7 +27,7 @@ function Workflows() {
         api.getBuiltinTemplates(),
         api.getCustomTemplates(),
       ])
-      setTemplates([...(builtin.templates || []), ...(custom.templates || [])])
+      setTemplates([...(builtin.templates || builtin || []), ...(custom.templates || custom || [])])
     } catch (error) {
       console.error('Failed to fetch templates:', error)
     } finally {
@@ -29,19 +35,47 @@ function Workflows() {
     }
   }
 
-  const handleUseTemplate = async (template) => {
+  const handleUseTemplate = async (template: any) => {
     const name = prompt('请输入工作流名称:', template.name)
     if (!name) return
 
     try {
-      const workflow = await api.instantiateTemplate(template.id, name)
-      alert(`工作流 "${name}" 已创建`)
+      await api.instantiateTemplate(template.id, name)
+      addToast(`工作流 "${name}" 已创建`, 'success')
       setActiveTab('workflows')
     } catch (error) {
       console.error('Failed to instantiate template:', error)
-      alert('创建失败')
+      addToast('创建失败', 'error')
     }
   }
+
+  const handleExecuteWorkflow = useCallback((workflow: Workflow) => {
+    const execute = async () => {
+      try {
+        const execution = await api.executeWorkflow({
+          workflow_id: workflow.id,
+          async: true,
+        })
+        addToast(`工作流 "${workflow.name}" 已开始执行`, 'success')
+      } catch (error) {
+        console.error('Failed to execute workflow:', error)
+        addToast('执行失败', 'error')
+      }
+    }
+    execute()
+  }, [addToast])
+
+  const handleAddToBatch = useCallback((workflow: Workflow) => {
+    setBatchItems((prev) => {
+      if (prev.some((item) => item.workflow_id === workflow.id)) {
+        addToast('该工作流已在批量执行列表中', 'warning')
+        return prev
+      }
+      addToast(`已添加 "${workflow.name}" 到批量执行`, 'info')
+      return [...prev, { workflow_id: workflow.id, workflow_name: workflow.name }]
+    })
+    setShowBatchPanel(true)
+  }, [addToast])
 
   return (
     <div className="workflows-page">
@@ -63,17 +97,42 @@ function Workflows() {
         >
           模板库
         </button>
+        {batchItems.length > 0 && (
+          <button
+            className={`tab-btn batch-tab ${showBatchPanel ? 'active' : ''}`}
+            onClick={() => setShowBatchPanel(!showBatchPanel)}
+          >
+            批量执行 ({batchItems.length})
+          </button>
+        )}
       </div>
 
       {activeTab === 'workflows' ? (
-        <WorkflowList />
+        <div className="workflows-content">
+          <div className="workflows-main">
+            <WorkflowList
+              onExecute={handleExecuteWorkflow}
+              onSelect={handleAddToBatch}
+            />
+          </div>
+          {showBatchPanel && (
+            <div className="batch-panel">
+              <BatchExecution
+                onComplete={() => {
+                  setBatchItems([])
+                  setShowBatchPanel(false)
+                }}
+              />
+            </div>
+          )}
+        </div>
       ) : (
         <div className="templates-section">
           {loading ? (
             <div className="loading">加载中...</div>
           ) : (
             <div className="templates-grid">
-              {templates.map((template) => (
+              {templates.map((template: any) => (
                 <div key={template.id} className="template-card">
                   <div className="template-icon">{template.icon || '📋'}</div>
                   <div className="template-content">
