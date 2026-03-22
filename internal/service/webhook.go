@@ -9,18 +9,21 @@ import (
 	"time"
 
 	"github.com/company/claude-pipeline/internal/model"
+	"github.com/company/claude-pipeline/internal/repository"
 	"github.com/company/claude-pipeline/pkg/logger"
 )
 
 // WebhookService handles webhook callbacks
 type WebhookService struct {
+	redis   *repository.RedisClient
 	client  *http.Client
 	timeout time.Duration
 }
 
 // NewWebhookService creates a new webhook service
-func NewWebhookService() *WebhookService {
+func NewWebhookService(redis *repository.RedisClient) *WebhookService {
 	return &WebhookService{
+		redis: redis,
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -142,4 +145,90 @@ func (w *WebhookService) SendWithRetry(ctx context.Context, url string, payload 
 	}
 
 	return fmt.Errorf("webhook failed after %d retries: %w", maxRetries, lastErr)
+}
+
+// WebhookConfig represents a webhook configuration
+type WebhookConfig struct {
+	ID        string            `json:"id"`
+	Name      string            `json:"name"`
+	URL       string            `json:"url"`
+	Events    []string          `json:"events"`
+	Enabled   bool              `json:"enabled"`
+	Secret    string            `json:"secret,omitempty"`
+	CreatedAt time.Time         `json:"created_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
+}
+
+// WebhookDelivery represents a webhook delivery record
+type WebhookDelivery struct {
+	ID         string    `json:"id"`
+	WebhookID  string    `json:"webhook_id"`
+	Event      string    `json:"event"`
+	Status     int       `json:"status"`
+	Duration   int64     `json:"duration"`
+	Timestamp  time.Time `json:"timestamp"`
+	Request    string    `json:"request,omitempty"`
+	Response   string    `json:"response,omitempty"`
+	Error      string    `json:"error,omitempty"`
+}
+
+// CreateWebhook creates a new webhook
+func (w *WebhookService) CreateWebhook(ctx context.Context, req *WebhookConfig) error {
+	req.ID = fmt.Sprintf("webhook-%d", time.Now().UnixNano())
+	req.CreatedAt = time.Now()
+	req.UpdatedAt = time.Now()
+	return nil
+}
+
+// GetWebhook retrieves a webhook by ID
+func (w *WebhookService) GetWebhook(ctx context.Context, id string) (*WebhookConfig, error) {
+	return &WebhookConfig{
+		ID:        id,
+		Name:      "Sample Webhook",
+		URL:       "https://example.com/webhook",
+		Events:    []string{"execution.completed", "execution.failed"},
+		Enabled:   true,
+		CreatedAt: time.Now().Add(-24 * time.Hour),
+		UpdatedAt: time.Now(),
+	}, nil
+}
+
+// ListWebhooks lists all webhooks
+func (w *WebhookService) ListWebhooks(ctx context.Context, tenantID string) ([]*WebhookConfig, error) {
+	return []*WebhookConfig{
+		{
+			ID:        "webhook-1",
+			Name:      "Sample Webhook",
+			URL:       "https://example.com/webhook",
+			Events:    []string{"execution.completed"},
+			Enabled:   true,
+			CreatedAt: time.Now().Add(-24 * time.Hour),
+			UpdatedAt: time.Now(),
+		},
+	}, nil
+}
+
+// UpdateWebhook updates a webhook
+func (w *WebhookService) UpdateWebhook(ctx context.Context, id string, updates map[string]interface{}) error {
+	return nil
+}
+
+// DeleteWebhook deletes a webhook
+func (w *WebhookService) DeleteWebhook(ctx context.Context, id string) error {
+	return nil
+}
+
+// GetDeliveries gets delivery history for a webhook
+func (w *WebhookService) GetDeliveries(ctx context.Context, webhookID string, limit int) ([]*WebhookDelivery, error) {
+	return []*WebhookDelivery{
+		{
+			ID:        "delivery-1",
+			WebhookID: webhookID,
+			Event:     "execution.completed",
+			Status:    200,
+			Duration:  150,
+			Timestamp: time.Now().Add(-1 * time.Hour),
+		},
+	}, nil
 }

@@ -9,7 +9,12 @@
       "Bash(git config:*)",
       "Bash(git push:*)",
       "Bash(ssh-keygen:*)",
-      "Bash(ssh -o StrictHostKeyChecking=no -T git@github.com)"
+      "Bash(ssh -o StrictHostKeyChecking=no -T git@github.com)",
+      "Bash(ls -la /home/rogtao/claude-docker/internal/service/*.go)",
+      "Bash(ls /home/rogtao/claude-docker/internal/service/*.go)",
+      "Bash(grep:*)",
+      "Bash(go build:*)",
+      "Bash(./scripts/dev.sh dev:*)"
     ]
   }
 }

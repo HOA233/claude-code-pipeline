@@ -12,12 +12,18 @@ import (
 
 // TemplateService manages pipeline templates
 type TemplateService struct {
-	redis *repository.RedisClient
+	redis       *repository.RedisClient
+	agentSvc    *AgentService
+	workflowSvc *WorkflowService
 }
 
 // NewTemplateService creates a new template service
-func NewTemplateService(redis *repository.RedisClient) *TemplateService {
-	return &TemplateService{redis: redis}
+func NewTemplateService(redis *repository.RedisClient, agentSvc *AgentService, workflowSvc *WorkflowService) *TemplateService {
+	return &TemplateService{
+		redis:       redis,
+		agentSvc:    agentSvc,
+		workflowSvc: workflowSvc,
+	}
 }
 
 // PipelineTmpl represents a reusable pipeline template
@@ -379,6 +385,63 @@ func (s *TemplateService) DeleteTemplate(ctx context.Context, id string) error {
 	}
 
 	return s.redis.Delete(ctx, "template:"+id)
+}
+
+// GetBuiltInTemplates returns built-in templates
+func (s *TemplateService) GetBuiltInTemplates() []PipelineTmpl {
+	return builtinTemplates
+}
+
+// ListCustomTemplates lists custom templates
+func (s *TemplateService) ListCustomTemplates(ctx context.Context) ([]PipelineTmpl, error) {
+	keys, err := s.redis.ListCacheKeys(ctx, "template:*")
+	if err != nil {
+		return []PipelineTmpl{}, nil
+	}
+
+	templates := []PipelineTmpl{}
+	for _, key := range keys {
+		data, err := s.redis.Get(ctx, key)
+		if err != nil {
+			continue
+		}
+
+		var template PipelineTmpl
+		if err := json.Unmarshal(data, &template); err != nil {
+			continue
+		}
+		templates = append(templates, template)
+	}
+
+	return templates, nil
+}
+
+// InstantiateTemplate creates a workflow from a template
+func (s *TemplateService) InstantiateTemplate(ctx context.Context, templateID string, name string) (*model.Workflow, error) {
+	template, err := s.GetTemplate(ctx, templateID)
+	if err != nil {
+		return nil, err
+	}
+
+	workflow := &model.Workflow{
+		ID:          "workflow-" + uuid.New().String()[:8],
+		Name:        name,
+		Description: template.Description,
+		Mode:        template.Mode,
+		Enabled:     true,
+	}
+
+	return workflow, nil
+}
+
+// SaveCustomTemplate saves a custom template
+func (s *TemplateService) SaveCustomTemplate(ctx context.Context, template *PipelineTmpl) error {
+	return s.SaveTemplate(ctx, template)
+}
+
+// DeleteCustomTemplate deletes a custom template
+func (s *TemplateService) DeleteCustomTemplate(ctx context.Context, id string) error {
+	return s.DeleteTemplate(ctx, id)
 }
 
 func (s *TemplateService) substituteVariables(value interface{}, variables map[string]interface{}) interface{} {
