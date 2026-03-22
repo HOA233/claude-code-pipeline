@@ -334,6 +334,28 @@ class APIClient {
   async retryExecution(id: string): Promise<any> {
     return this.request('POST', `/executions/${id}/retry`);
   }
+
+  // ==================== Template API ====================
+
+  async getBuiltinTemplates(): Promise<any> {
+    return this.request('GET', '/templates/builtin');
+  }
+
+  async getCustomTemplates(): Promise<any> {
+    return this.request('GET', '/templates/custom');
+  }
+
+  async saveCustomTemplate(data: any): Promise<any> {
+    return this.request('POST', '/templates/custom', data);
+  }
+
+  async deleteCustomTemplate(id: string): Promise<void> {
+    return this.request('DELETE', `/templates/custom/${id}`);
+  }
+
+  async instantiateTemplate(id: string, name: string): Promise<any> {
+    return this.request('POST', `/templates/${id}/instantiate`, { name });
+  }
 }
 
 export const api = new APIClient();
