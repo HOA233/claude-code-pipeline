@@ -1,0 +1,97 @@
+.workflow-visualizer {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.visualizer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.visualizer-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.mode-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.mode-icon {
+  font-size: 1rem;
+}
+
+.visualizer-container {
+  overflow: auto;
+  max-height: 500px;
+}
+
+.workflow-svg {
+  display: block;
+  min-width: 100%;
+  min-height: 300px;
+}
+
+.workflow-node {
+  cursor: pointer;
+  transition: transform 0.2s, filter 0.2s;
+}
+
+.workflow-node:hover {
+  filter: brightness(1.1);
+}
+
+.workflow-node.highlighted rect {
+  filter: drop-shadow(0 0 8px rgba(24, 144, 255, 0.5));
+}
+
+.visualizer-legend {
+  display: flex;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-tertiary);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot.completed {
+  background: #52c41a;
+}
+
+.legend-dot.running {
+  background: #1890ff;
+}
+
+.legend-dot.failed {
+  background: #f5222d;
+}
+
+.legend-dot.pending {
+  background: #8c8c8c;
+}

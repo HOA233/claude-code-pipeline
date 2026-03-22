@@ -67,3 +67,9 @@
 .health-section {
   min-height: 400px;
 }
+
+/* Timeline Row */
+.timeline-row {
+  grid-template-columns: 1fr;
+  margin-top: 24px;
+}

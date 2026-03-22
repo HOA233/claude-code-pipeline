@@ -3,6 +3,8 @@ import type { Execution, Agent, Workflow, ScheduledJob } from '../types';
 import api from '../api/client';
 import { ExecutionCharts } from './ExecutionCharts';
 import { SystemHealth } from './SystemHealth';
+import { ExecutionTimeline } from './ExecutionTimeline';
+import { ExecutionDetailModal } from './ExecutionDetailModal';
 import '../pages/Dashboard.css';
 
 interface DashboardStats {
@@ -33,6 +35,7 @@ export const Dashboard: React.FC = () => {
   });
   const [recentExecutions, setRecentExecutions] = useState<Execution[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -263,6 +266,21 @@ export const Dashboard: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Execution Timeline */}
+      <div className="dashboard-row timeline-row">
+        <ExecutionTimeline
+          limit={5}
+          onSelect={(exec) => setSelectedExecutionId(exec.id)}
+        />
+      </div>
+
+      {selectedExecutionId && (
+        <ExecutionDetailModal
+          executionId={selectedExecutionId}
+          onClose={() => setSelectedExecutionId(null)}
+        />
+      )}
     </div>
   );
 };
