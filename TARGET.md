@@ -439,22 +439,23 @@ interface Execution {
 ## 迁移路径
 
 ### 第一阶段：模型重构
-- [ ] 重命名 Skill -> Agent
-- [ ] 重命名 Pipeline -> Workflow
-- [ ] 重命名 Step -> AgentNode
-- [ ] 重命名 Run -> Execution
-- [ ] 更新所有模型结构
+- [x] 创建 Agent 模型
+- [x] 创建 Workflow 模型
+- [x] 创建 AgentNode 模型
+- [x] 创建 Execution 模型
+- [x] 创建 ScheduledJob 模型
 
 ### 第二阶段：服务层
-- [ ] 创建 AgentService
-- [ ] 创建 WorkflowService
+- [x] 创建 AgentService
+- [x] 创建 WorkflowService
 - [ ] 更新 Orchestrator 支持 Agent 组合
-- [ ] 实现 Agent 之间的数据流
+- [x] 实现 Agent 之间的数据流
 
 ### 第三阶段：API 层
-- [ ] 更新路由使用新命名
-- [ ] 添加直接 Agent 执行端点
-- [ ] 增强 SSE 流式传输
+- [x] 添加 Agent API 端点
+- [x] 添加 Workflow API 端点
+- [x] 添加 Execution API 端点
+- [x] 增强 SSE 流式传输
 
 ### 第四阶段：CLI 集成
 - [ ] 增强 Claude Code CLI 参数支持
@@ -462,10 +463,10 @@ interface Execution {
 - [ ] 支持权限系统
 
 ### 第五阶段：定时调度
-- [ ] 创建 ScheduledJob 模型
-- [ ] 创建 SchedulerService
-- [ ] 实现 Cron 表达式解析
-- [ ] 添加定时任务 API
+- [x] 创建 ScheduledJob 模型
+- [ ] 创建 SchedulerService (增强版)
+- [x] 实现 Cron 表达式解析
+- [x] 添加定时任务 API
 - [ ] 支持时区配置
 
 ### 第六阶段：测试与文档
