@@ -15,3 +15,32 @@
   margin: 0;
   color: var(--text-secondary);
 }
+
+.executions-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.charts-section {
+  position: sticky;
+  top: 24px;
+  height: fit-content;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+.list-section {
+  min-height: 400px;
+}
+
+@media (max-width: 1200px) {
+  .executions-content {
+    grid-template-columns: 1fr;
+  }
+
+  .charts-section {
+    position: static;
+    max-height: none;
+  }
+}
