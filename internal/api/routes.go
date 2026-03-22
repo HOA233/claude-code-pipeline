@@ -52,6 +52,45 @@ func SetupRoutes(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service
 	r.GET("/sse", taskSSEHandler.HandleGlobalSSE)
 }
 
+// SetupRoutesWithAgent sets up routes including Agent, Workflow, and Execution endpoints
+func SetupRoutesWithAgent(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService) {
+	// Set up base routes
+	SetupRoutes(r, skillSvc, taskSvc, executor, orch, redis)
+
+	// Initialize handlers
+	agentHandler := NewAgentHandler(agentSvc)
+	workflowHandler := NewWorkflowHandler(workflowSvc)
+	executionHandler := NewExecutionHandler(workflowSvc)
+
+	api := r.Group("/api")
+	{
+		// Agents
+		api.POST("/agents", agentHandler.CreateAgent)
+		api.GET("/agents", agentHandler.ListAgents)
+		api.GET("/agents/:id", agentHandler.GetAgent)
+		api.PUT("/agents/:id", agentHandler.UpdateAgent)
+		api.DELETE("/agents/:id", agentHandler.DeleteAgent)
+		api.POST("/agents/:id/test", agentHandler.TestAgent)
+		api.POST("/agents/:id/execute", agentHandler.ExecuteAgent)
+
+		// Workflows
+		api.POST("/workflows", workflowHandler.CreateWorkflow)
+		api.GET("/workflows", workflowHandler.ListWorkflows)
+		api.GET("/workflows/:id", workflowHandler.GetWorkflow)
+		api.PUT("/workflows/:id", workflowHandler.UpdateWorkflow)
+		api.DELETE("/workflows/:id", workflowHandler.DeleteWorkflow)
+
+		// Executions
+		api.POST("/executions", executionHandler.ExecuteWorkflow)
+		api.GET("/executions", executionHandler.ListExecutions)
+		api.GET("/executions/:id", executionHandler.GetExecution)
+		api.POST("/executions/:id/cancel", executionHandler.CancelExecution)
+		api.POST("/executions/:id/pause", executionHandler.PauseExecution)
+		api.POST("/executions/:id/resume", executionHandler.ResumeExecution)
+		api.POST("/executions/cancel-all", executionHandler.CancelAllExecutions)
+	}
+}
+
 // SetupRoutesWithScheduler sets up routes including scheduler endpoints
 func SetupRoutesWithScheduler(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, schedulerSvc *service.SchedulerService) {
 	// Set up base routes

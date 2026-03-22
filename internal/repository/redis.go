@@ -620,3 +620,338 @@ func (r *RedisClient) DeleteByPattern(ctx context.Context, pattern string) error
 	}
 	return r.client.Del(ctx, keys...).Err()
 }
+
+// ==================== Agent Storage ====================
+
+const agentKeyPrefix = "agent:"
+
+func (r *RedisClient) SaveAgent(ctx context.Context, agent *model.Agent) error {
+	data, err := json.Marshal(agent)
+	if err != nil {
+		return err
+	}
+	return r.client.Set(ctx, agentKeyPrefix+agent.ID, data, 0).Err()
+}
+
+func (r *RedisClient) GetAgent(ctx context.Context, agentID string) (*model.Agent, error) {
+	data, err := r.client.Get(ctx, agentKeyPrefix+agentID).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	var agent model.Agent
+	if err := json.Unmarshal(data, &agent); err != nil {
+		return nil, err
+	}
+	return &agent, nil
+}
+
+func (r *RedisClient) DeleteAgent(ctx context.Context, agentID string) error {
+	return r.client.Del(ctx, agentKeyPrefix+agentID).Err()
+}
+
+func (r *RedisClient) ListAgents(ctx context.Context, tenantID string, category string) ([]*model.Agent, error) {
+	keys, err := r.client.Keys(ctx, agentKeyPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	agents := make([]*model.Agent, 0, len(keys))
+	for _, key := range keys {
+		data, err := r.client.Get(ctx, key).Bytes()
+		if err != nil {
+			continue
+		}
+		var agent model.Agent
+		if err := json.Unmarshal(data, &agent); err != nil {
+			continue
+		}
+		// Filter by tenant and category
+		if tenantID != "" && agent.TenantID != tenantID {
+			continue
+		}
+		if category != "" && agent.Category != category {
+			continue
+		}
+		agents = append(agents, &agent)
+	}
+	return agents, nil
+}
+
+// ==================== Workflow Storage ====================
+
+const workflowKeyPrefix = "workflow:"
+
+func (r *RedisClient) SaveWorkflow(ctx context.Context, workflow *model.Workflow) error {
+	data, err := json.Marshal(workflow)
+	if err != nil {
+		return err
+	}
+	return r.client.Set(ctx, workflowKeyPrefix+workflow.ID, data, 0).Err()
+}
+
+func (r *RedisClient) GetWorkflow(ctx context.Context, workflowID string) (*model.Workflow, error) {
+	data, err := r.client.Get(ctx, workflowKeyPrefix+workflowID).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	var workflow model.Workflow
+	if err := json.Unmarshal(data, &workflow); err != nil {
+		return nil, err
+	}
+	return &workflow, nil
+}
+
+func (r *RedisClient) DeleteWorkflow(ctx context.Context, workflowID string) error {
+	return r.client.Del(ctx, workflowKeyPrefix+workflowID).Err()
+}
+
+func (r *RedisClient) ListWorkflows(ctx context.Context, tenantID string) ([]*model.Workflow, error) {
+	keys, err := r.client.Keys(ctx, workflowKeyPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	workflows := make([]*model.Workflow, 0, len(keys))
+	for _, key := range keys {
+		data, err := r.client.Get(ctx, key).Bytes()
+		if err != nil {
+			continue
+		}
+		var workflow model.Workflow
+		if err := json.Unmarshal(data, &workflow); err != nil {
+			continue
+		}
+		if tenantID != "" && workflow.TenantID != tenantID {
+			continue
+		}
+		workflows = append(workflows, &workflow)
+	}
+	return workflows, nil
+}
+
+// ==================== Execution Storage ====================
+
+const executionKeyPrefix = "execution:"
+
+func (r *RedisClient) SaveExecution(ctx context.Context, execution *model.Execution) error {
+	data, err := json.Marshal(execution)
+	if err != nil {
+		return err
+	}
+	return r.client.Set(ctx, executionKeyPrefix+execution.ID, data, 24*time.Hour).Err()
+}
+
+func (r *RedisClient) GetExecution(ctx context.Context, executionID string) (*model.Execution, error) {
+	data, err := r.client.Get(ctx, executionKeyPrefix+executionID).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	var execution model.Execution
+	if err := json.Unmarshal(data, &execution); err != nil {
+		return nil, err
+	}
+	return &execution, nil
+}
+
+func (r *RedisClient) ListExecutions(ctx context.Context, filter *model.ExecutionFilter) (*model.ExecutionListResponse, error) {
+	keys, err := r.client.Keys(ctx, executionKeyPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	executions := make([]model.Execution, 0)
+	for _, key := range keys {
+		data, err := r.client.Get(ctx, key).Bytes()
+		if err != nil {
+			continue
+		}
+		var execution model.Execution
+		if err := json.Unmarshal(data, &execution); err != nil {
+			continue
+		}
+		// Apply filters
+		if filter != nil {
+			if filter.Status != "" && execution.Status != filter.Status {
+				continue
+			}
+			if filter.WorkflowID != "" && execution.WorkflowID != filter.WorkflowID {
+				continue
+			}
+			if filter.TenantID != "" && execution.TenantID != filter.TenantID {
+				continue
+			}
+		}
+		executions = append(executions, execution)
+	}
+
+	// Pagination
+	page := 1
+	pageSize := 20
+	if filter != nil {
+		if filter.Page > 0 {
+			page = filter.Page
+		}
+		if filter.PageSize > 0 {
+			pageSize = filter.PageSize
+		}
+	}
+
+	total := len(executions)
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+
+	return &model.ExecutionListResponse{
+		Executions: executions[start:end],
+		Total:      total,
+		Page:       page,
+		PageSize:   pageSize,
+	}, nil
+}
+
+func (r *RedisClient) PublishExecutionUpdate(ctx context.Context, executionID string, data interface{}) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return r.client.Publish(ctx, "execution:updates:"+executionID, jsonData).Err()
+}
+
+func (r *RedisClient) SubscribeExecutionUpdates(ctx context.Context, executionID string) *redis.PubSub {
+	return r.client.Subscribe(ctx, "execution:updates:"+executionID)
+}
+
+func (r *RedisClient) SubscribeAllExecutionUpdates(ctx context.Context) *redis.PubSub {
+	return r.client.PSubscribe(ctx, "execution:updates:*")
+}
+
+// ==================== ScheduledJob Storage ====================
+
+const scheduledJobKeyPrefix = "scheduledjob:"
+
+func (r *RedisClient) SaveScheduledJob(ctx context.Context, job *model.ScheduledJob) error {
+	data, err := json.Marshal(job)
+	if err != nil {
+		return err
+	}
+	return r.client.Set(ctx, scheduledJobKeyPrefix+job.ID, data, 0).Err()
+}
+
+func (r *RedisClient) GetScheduledJob(ctx context.Context, jobID string) (*model.ScheduledJob, error) {
+	data, err := r.client.Get(ctx, scheduledJobKeyPrefix+jobID).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	var job model.ScheduledJob
+	if err := json.Unmarshal(data, &job); err != nil {
+		return nil, err
+	}
+	return &job, nil
+}
+
+func (r *RedisClient) DeleteScheduledJob(ctx context.Context, jobID string) error {
+	return r.client.Del(ctx, scheduledJobKeyPrefix+jobID).Err()
+}
+
+func (r *RedisClient) ListScheduledJobs(ctx context.Context, tenantID string) ([]*model.ScheduledJob, error) {
+	keys, err := r.client.Keys(ctx, scheduledJobKeyPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	jobs := make([]*model.ScheduledJob, 0, len(keys))
+	for _, key := range keys {
+		data, err := r.client.Get(ctx, key).Bytes()
+		if err != nil {
+			continue
+		}
+		var job model.ScheduledJob
+		if err := json.Unmarshal(data, &job); err != nil {
+			continue
+		}
+		if tenantID != "" && job.TenantID != tenantID {
+			continue
+		}
+		jobs = append(jobs, &job)
+	}
+	return jobs, nil
+}
+
+func (r *RedisClient) GetEnabledScheduledJobs(ctx context.Context) ([]*model.ScheduledJob, error) {
+	keys, err := r.client.Keys(ctx, scheduledJobKeyPrefix+"*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	jobs := make([]*model.ScheduledJob, 0)
+	for _, key := range keys {
+		data, err := r.client.Get(ctx, key).Bytes()
+		if err != nil {
+			continue
+		}
+		var job model.ScheduledJob
+		if err := json.Unmarshal(data, &job); err != nil {
+			continue
+		}
+		if job.Enabled {
+			jobs = append(jobs, &job)
+		}
+	}
+	return jobs, nil
+}
+
+// ==================== Job Execution History ====================
+
+const jobHistoryPrefix = "jobhistory:"
+
+func (r *RedisClient) SaveJobExecutionHistory(ctx context.Context, history *model.JobExecutionHistory) error {
+	data, err := json.Marshal(history)
+	if err != nil {
+		return err
+	}
+	key := jobHistoryPrefix + history.JobID + ":" + history.ID
+	return r.client.Set(ctx, key, data, 30*24*time.Hour).Err() // 30 days TTL
+}
+
+func (r *RedisClient) GetJobExecutionHistory(ctx context.Context, jobID string, page, pageSize int) (*model.JobExecutionHistoryListResponse, error) {
+	pattern := jobHistoryPrefix + jobID + ":*"
+	keys, err := r.client.Keys(ctx, pattern).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	history := make([]model.JobExecutionHistory, 0)
+	for _, key := range keys {
+		data, err := r.client.Get(ctx, key).Bytes()
+		if err != nil {
+			continue
+		}
+		var h model.JobExecutionHistory
+		if err := json.Unmarshal(data, &h); err != nil {
+			continue
+		}
+		history = append(history, h)
+	}
+
+	total := len(history)
+	start := (page - 1) * pageSize
+	end := start + pageSize
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+
+	return &model.JobExecutionHistoryListResponse{
+		History:  history[start:end],
+		Total:    total,
+		Page:     page,
+		PageSize: pageSize,
+	}, nil
+}
