@@ -955,3 +955,30 @@ func (r *RedisClient) GetJobExecutionHistory(ctx context.Context, jobID string, 
 		PageSize: pageSize,
 	}, nil
 }
+
+// ==================== List Operations ====================
+
+// RPush 向列表右侧添加元素
+func (r *RedisClient) RPush(ctx context.Context, key string, value string) error {
+	return r.client.RPush(ctx, key, value).Err()
+}
+
+// LRange 获取列表范围内的元素
+func (r *RedisClient) LRange(ctx context.Context, key string, start, stop int64) ([]string, error) {
+	return r.client.LRange(ctx, key, start, stop).Result()
+}
+
+// LLen 获取列表长度
+func (r *RedisClient) LLen(ctx context.Context, key string) (int64, error) {
+	return r.client.LLen(ctx, key).Result()
+}
+
+// LTrim 裁剪列表
+func (r *RedisClient) LTrim(ctx context.Context, key string, start, stop int64) error {
+	return r.client.LTrim(ctx, key, start, stop).Err()
+}
+
+// Expire 设置过期时间
+func (r *RedisClient) Expire(ctx context.Context, key string, expiration time.Duration) error {
+	return r.client.Expire(ctx, key, expiration).Err()
+}
