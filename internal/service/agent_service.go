@@ -54,6 +54,27 @@ func (s *AgentService) CreateAgent(ctx context.Context, req *model.AgentCreateRe
 	return agent, nil
 }
 
+// CreateAgentDirect 直接创建 Agent（用于模板实例化）
+func (s *AgentService) CreateAgentDirect(ctx context.Context, agent *model.Agent) error {
+	if agent.ID == "" {
+		agent.ID = uuid.New().String()
+	}
+	now := time.Now()
+	if agent.CreatedAt.IsZero() {
+		agent.CreatedAt = now
+	}
+	if agent.UpdatedAt.IsZero() {
+		agent.UpdatedAt = now
+	}
+
+	if err := s.redis.SaveAgent(ctx, agent); err != nil {
+		return fmt.Errorf("failed to save agent: %w", err)
+	}
+
+	logger.Infof("Created agent directly: %s (%s)", agent.Name, agent.ID)
+	return nil
+}
+
 // GetAgent 获取 Agent
 func (s *AgentService) GetAgent(ctx context.Context, id string) (*model.Agent, error) {
 	agent, err := s.redis.GetAgent(ctx, id)
