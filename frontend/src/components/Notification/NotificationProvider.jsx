@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useCallback } from 'react'
-import { useUIStore } from '../stores'
+import { useUIStore } from '../../stores'
 import './NotificationProvider.css'
 
 const NotificationContext = createContext(null)
