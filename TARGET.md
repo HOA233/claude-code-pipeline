@@ -27,6 +27,10 @@ type Agent struct {
     SystemPrompt string           `json:"system_prompt"`   // Agent 的行为/指令
     MaxTokens   int               `json:"max_tokens"`
 
+    // 技能选择 - Agent 可选择不同的 Skill
+    Skills      []SkillRef        `json:"skills"`          // 该 Agent 可调用的技能列表
+    DefaultSkill string           `json:"default_skill,omitempty"` // 默认技能
+
     // 能力配置
     Tools       []Tool            `json:"tools"`           // 该 Agent 可用的工具
     Permissions []Permission      `json:"permissions"`     // 该 Agent 的权限
@@ -39,10 +43,30 @@ type Agent struct {
     Timeout     int               `json:"timeout"`
     RetryPolicy RetryPolicy       `json:"retry_policy"`
 
+    // 隔离配置
+    Isolation   IsolationConfig   `json:"isolation"`       // 数据/会话隔离配置
+
     // 元数据
     Tags        []string          `json:"tags"`
     Category    string            `json:"category"`
     Version     string            `json:"version"`
+}
+
+// SkillRef 定义 Agent 可引用的技能
+type SkillRef struct {
+    SkillID     string            `json:"skill_id"`
+    Alias       string            `json:"alias,omitempty"` // 在 Agent 内的别名
+    InputMapping map[string]string `json:"input_mapping,omitempty"` // 输入映射
+    OutputMapping map[string]string `json:"output_mapping,omitempty"` // 输出映射
+}
+
+// IsolationConfig 隔离配置
+type IsolationConfig struct {
+    DataIsolation    bool   `json:"data_isolation"`     // 数据隔离
+    SessionIsolation bool   `json:"session_isolation"`  // 会话隔离
+    NetworkIsolation bool   `json:"network_isolation"`  // 网络隔离
+    FileIsolation    bool   `json:"file_isolation"`     // 文件系统隔离
+    Namespace        string `json:"namespace,omitempty"` // 隔离命名空间
 }
 ```
 
@@ -151,6 +175,57 @@ POST   /api/executions          # 触发工作流执行
 GET    /api/executions/:id      # 获取执行状态/结果
 POST   /api/executions/:id/cancel # 取消执行
 GET    /api/executions/:id/stream # SSE 实时更新流
+```
+
+---
+
+## 技能选择与隔离机制
+
+### Agent 技能选择
+每个 Agent 可以选择多个 Skill，实现能力组合：
+
+```json
+{
+  "id": "code-analyzer",
+  "name": "代码分析器",
+  "skills": [
+    {
+      "skill_id": "static-analysis",
+      "alias": "linter",
+      "input_mapping": {
+        "target": "code_path"
+      }
+    },
+    {
+      "skill_id": "security-scan",
+      "alias": "scanner"
+    }
+  ],
+  "default_skill": "linter"
+}
+```
+
+### 隔离级别
+
+| 隔离类型 | 说明 | 使用场景 |
+|---------|------|---------|
+| 数据隔离 | Agent 执行数据独立存储 | 多租户环境 |
+| 会话隔离 | 每个 Agent 有独立会话 | 并发执行 |
+| 网络隔离 | Agent 网络访问受限 | 安全敏感任务 |
+| 文件隔离 | 独立文件系统命名空间 | 代码修改任务 |
+
+### 隔离配置示例
+
+```json
+{
+  "isolation": {
+    "data_isolation": true,
+    "session_isolation": true,
+    "network_isolation": false,
+    "file_isolation": true,
+    "namespace": "tenant-123"
+  }
+}
 ```
 
 ---
