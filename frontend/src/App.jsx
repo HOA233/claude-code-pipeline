@@ -9,6 +9,10 @@ import Tasks from './pages/Tasks'
 import Pipelines from './pages/Pipelines'
 import TaskPage from './pages/TaskPage'
 import Settings from './pages/Settings'
+import Agents from './pages/Agents'
+import Workflows from './pages/Workflows'
+import Executions from './pages/Executions'
+import Schedules from './pages/Schedules'
 
 function App() {
   return (
@@ -23,6 +27,10 @@ function App() {
               <Route path="/tasks/new" element={<TaskPage />} />
               <Route path="/pipelines" element={<Pipelines />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/agents" element={<Agents />} />
+              <Route path="/workflows" element={<Workflows />} />
+              <Route path="/executions" element={<Executions />} />
+              <Route path="/schedules" element={<Schedules />} />
             </Routes>
           </Layout>
         </BrowserRouter>

@@ -7,9 +7,14 @@ const Layout = ({ children }) => {
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: '🏠' },
+    { path: '/agents', label: 'Agents', icon: '🤖' },
+    { path: '/workflows', label: 'Workflows', icon: '🔄' },
+    { path: '/executions', label: 'Executions', icon: '📋' },
+    { path: '/schedules', label: 'Schedules', icon: '⏰' },
     { path: '/skills', label: 'Skills', icon: '⚡' },
-    { path: '/tasks', label: 'Tasks', icon: '📋' },
+    { path: '/tasks', label: 'Tasks', icon: '📝' },
     { path: '/pipelines', label: 'Pipelines', icon: '🔗' },
+    { path: '/settings', label: 'Settings', icon: '⚙️' },
   ]
 
   return (
@@ -32,7 +37,7 @@ const Layout = ({ children }) => {
               />
             </svg>
           </div>
-          <h1 className="sidebar-title">Claude Pipeline</h1>
+          <h1 className="sidebar-title">Agent Platform</h1>
         </div>
 
         <nav className="sidebar-nav">

@@ -1,0 +1,384 @@
+/* App Layout */
+.app {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: #001529;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  padding: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo h1 {
+  font-size: 18px;
+  margin: 0;
+  color: #fff;
+}
+
+.nav-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-menu li a {
+  display: block;
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.nav-menu li a:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-menu li a.active {
+  color: #fff;
+  background: #1890ff;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header h1, .header h2 {
+  margin: 0;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  font-size: 32px;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: #333;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 14px;
+}
+
+.stat-breakdown {
+  margin-top: 8px;
+  font-size: 12px;
+  display: flex;
+  gap: 12px;
+}
+
+/* Execution List */
+.execution-list, .agent-list, .workflow-list, .scheduled-job-list {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.execution-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.execution-item:last-child {
+  border-bottom: none;
+}
+
+.execution-item .status-icon {
+  font-size: 20px;
+  width: 30px;
+  text-align: center;
+}
+
+.execution-item .info {
+  flex: 1;
+}
+
+.execution-item .title {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.execution-item .title .id {
+  font-family: monospace;
+  color: #666;
+  font-size: 12px;
+}
+
+.execution-item .title .name {
+  font-weight: 500;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1890ff, #52c41a);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.execution-item .meta {
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  gap: 16px;
+}
+
+.execution-item .actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Buttons */
+button {
+  padding: 8px 16px;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+button:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+button.danger {
+  border-color: #ff4d4f;
+  color: #ff4d4f;
+}
+
+button.danger:hover {
+  background: #ff4d4f;
+  color: #fff;
+}
+
+/* Select */
+select {
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  background: #fff;
+}
+
+/* Loading & Empty States */
+.loading, .empty {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Agent List */
+.agent-item, .workflow-item, .job-item {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.agent-item:last-child, .workflow-item:last-child, .job-item:last-child {
+  border-bottom: none;
+}
+
+.agent-item h3, .workflow-item h3, .job-item h3 {
+  margin: 0 0 8px 0;
+}
+
+.agent-item .description, .workflow-item .description, .job-item .description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.agent-item .tags, .workflow-item .tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.agent-item .tag {
+  background: #f0f0f0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.status {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.status.enabled {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.status.disabled {
+  background: #fff7e6;
+  color: #faad14;
+}
+
+/* Quick Actions */
+.quick-actions {
+  margin-top: 24px;
+}
+
+.quick-actions h2 {
+  margin-bottom: 16px;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.action-btn:hover {
+  border-color: #1890ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2);
+}
+
+.action-btn .icon {
+  font-size: 24px;
+}
+
+/* Recent Executions */
+.recent-executions {
+  margin-top: 24px;
+}
+
+.recent-executions h2 {
+  margin-bottom: 16px;
+}
+
+.execution-table {
+  overflow-x: auto;
+}
+
+.execution-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.execution-table th, .execution-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.execution-table th {
+  background: #fafafa;
+  font-weight: 500;
+}
+
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-cell .progress-bar {
+  flex: 1;
+  min-width: 100px;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Dashboard */
+.dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
