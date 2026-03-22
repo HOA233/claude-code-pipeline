@@ -15,14 +15,14 @@ import (
 // AuthService handles authentication and authorization
 type AuthService struct {
 	mu          sync.RWMutex
-	apiKeys     map[string]*APIKey
+	apiKeys     map[string]*APIKeyAuth
 	sessions    map[string]*Session
 	permissions map[string][]string
 	jwtSecret   string
 }
 
-// APIKey represents an API key
-type APIKey struct {
+// APIKeyAuth represents an API key for auth service
+type APIKeyAuth struct {
 	ID          string            `json:"id"`
 	Key         string            `json:"key"`
 	Name        string            `json:"name"`
@@ -95,7 +95,7 @@ func NewAuthService(cfg *AuthConfig) *AuthService {
 }
 
 // CreateAPIKey creates a new API key
-func (s *AuthService) CreateAPIKey(ctx context.Context, req *CreateAPIKeyRequest) (*APIKey, error) {
+func (s *AuthService) CreateAPIKey(ctx context.Context, req *CreateAPIKeyRequest) (*APIKeyAuth, error) {
 	if req.Name == "" {
 		return nil, errors.New("name is required")
 	}
@@ -106,7 +106,7 @@ func (s *AuthService) CreateAPIKey(ctx context.Context, req *CreateAPIKeyRequest
 	key := generateAPIKey()
 	now := time.Now()
 
-	apiKey := &APIKey{
+	apiKey := &APIKeyAuth{
 		ID:          generateID(),
 		Key:         key,
 		Name:        req.Name,
@@ -139,7 +139,7 @@ type CreateAPIKeyRequest struct {
 }
 
 // ValidateAPIKey validates an API key
-func (s *AuthService) ValidateAPIKey(ctx context.Context, key string) (*APIKey, error) {
+func (s *AuthService) ValidateAPIKey(ctx context.Context, key string) (*APIKeyAuth, error) {
 	s.mu.RLock()
 	apiKey, exists := s.apiKeys[key]
 	s.mu.RUnlock()
@@ -181,7 +181,7 @@ func (s *AuthService) RevokeAPIKey(ctx context.Context, keyID string) error {
 }
 
 // ListAPIKeys lists all API keys for a tenant
-func (s *AuthService) ListAPIKeys(tenantID string) []*APIKey {
+func (s *AuthService) ListAPIKeys(tenantID string) []*APIKeyAuth {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -420,7 +420,7 @@ func maskAPIKey(key string) string {
 }
 
 // ToJSON serializes API key to JSON
-func (k *APIKey) ToJSON() ([]byte, error) {
+func (k *APIKeyAuth) ToJSON() ([]byte, error) {
 	return json.Marshal(k)
 }
 

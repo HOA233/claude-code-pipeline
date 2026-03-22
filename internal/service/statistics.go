@@ -64,8 +64,8 @@ type PerformanceStats struct {
 	SuccessRate       float64 `json:"success_rate"`
 }
 
-// SystemInfo contains system information
-type SystemInfo struct {
+// SystemStatsInfo contains system information for stats
+type SystemStatsInfo struct {
 	GoVersion    string `json:"go_version"`
 	NumGoroutine int    `json:"num_goroutine"`
 	MemAllocMB   uint64 `json:"mem_alloc_mb"`

@@ -194,8 +194,8 @@ func (e *RetryExecutor) ExecuteWithDetails(fn func() (interface{}, error)) *Retr
 	return result
 }
 
-// CircuitBreaker implements the circuit breaker pattern
-type CircuitBreaker struct {
+// SimpleCircuitBreaker implements a simple circuit breaker pattern
+type SimpleCircuitBreaker struct {
 	maxFailures   int
 	timeout       time.Duration
 	state         string // "closed", "open", "half-open"
@@ -205,9 +205,9 @@ type CircuitBreaker struct {
 	successTarget int
 }
 
-// NewCircuitBreaker creates a new circuit breaker
-func NewCircuitBreaker(maxFailures int, timeout time.Duration) *CircuitBreaker {
-	return &CircuitBreaker{
+// NewSimpleCircuitBreaker creates a new simple circuit breaker
+func NewSimpleCircuitBreaker(maxFailures int, timeout time.Duration) *SimpleCircuitBreaker {
+	return &SimpleCircuitBreaker{
 		maxFailures:   maxFailures,
 		timeout:       timeout,
 		state:         "closed",
@@ -216,7 +216,7 @@ func NewCircuitBreaker(maxFailures int, timeout time.Duration) *CircuitBreaker {
 }
 
 // Execute executes a function through the circuit breaker
-func (cb *CircuitBreaker) Execute(fn func() error) error {
+func (cb *SimpleCircuitBreaker) Execute(fn func() error) error {
 	if !cb.canExecute() {
 		return fmt.Errorf("circuit breaker is open")
 	}
@@ -231,7 +231,7 @@ func (cb *CircuitBreaker) Execute(fn func() error) error {
 	return nil
 }
 
-func (cb *CircuitBreaker) canExecute() bool {
+func (cb *SimpleCircuitBreaker) canExecute() bool {
 	if cb.state == "closed" {
 		return true
 	}
@@ -250,7 +250,7 @@ func (cb *CircuitBreaker) canExecute() bool {
 	return true
 }
 
-func (cb *CircuitBreaker) recordFailure() {
+func (cb *SimpleCircuitBreaker) recordFailure() {
 	cb.failures++
 	cb.lastFailTime = time.Now()
 
@@ -261,7 +261,7 @@ func (cb *CircuitBreaker) recordFailure() {
 	}
 }
 
-func (cb *CircuitBreaker) recordSuccess() {
+func (cb *SimpleCircuitBreaker) recordSuccess() {
 	cb.failures = 0
 
 	if cb.state == "half-open" {
@@ -273,12 +273,12 @@ func (cb *CircuitBreaker) recordSuccess() {
 }
 
 // State returns the current circuit breaker state
-func (cb *CircuitBreaker) State() string {
+func (cb *SimpleCircuitBreaker) State() string {
 	return cb.state
 }
 
 // Reset resets the circuit breaker
-func (cb *CircuitBreaker) Reset() {
+func (cb *SimpleCircuitBreaker) Reset() {
 	cb.state = "closed"
 	cb.failures = 0
 	cb.successCount = 0

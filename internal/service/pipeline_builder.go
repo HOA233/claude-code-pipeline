@@ -11,27 +11,27 @@ import (
 
 // PipelineBuilder provides a fluent API for constructing pipelines
 type PipelineBuilder struct {
-	pipeline *PipelineDefinition
+	pipeline *PipelineDef
 	errors   []error
 }
 
-// PipelineDefinition represents a pipeline configuration
-type PipelineDefinition struct {
+// PipelineDef represents a pipeline configuration for builder
+type PipelineDef struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name"`
 	Description string                 `json:"description"`
 	Version     string                 `json:"version"`
 	Mode        string                 `json:"mode"` // serial, parallel, hybrid
-	Steps       []StepDefinition       `json:"steps"`
+	Steps       []StepDef              `json:"steps"`
 	Variables   map[string]interface{} `json:"variables,omitempty"`
-	Triggers    []TriggerDefinition    `json:"triggers,omitempty"`
+	Triggers    []TriggerDef           `json:"triggers,omitempty"`
 	ErrorConfig *ErrorConfig           `json:"error_config,omitempty"`
 	Timeout     int                    `json:"timeout,omitempty"`
 	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
-// StepDefinition represents a step in a pipeline
-type StepDefinition struct {
+// StepDef represents a step in a pipeline for builder
+type StepDef struct {
 	ID          string                 `json:"id"`
 	Name        string                 `json:"name,omitempty"`
 	Description string                 `json:"description,omitempty"`
@@ -42,7 +42,7 @@ type StepDefinition struct {
 	DependsOn   []string               `json:"depends_on,omitempty"`
 	Condition   string                 `json:"condition,omitempty"`
 	Timeout     int                    `json:"timeout,omitempty"`
-	Retry       *RetryConfig           `json:"retry,omitempty"`
+	Retry       *RetryCfg              `json:"retry,omitempty"`
 	OnError     string                 `json:"on_error,omitempty"` // stop, continue, rollback
 	InputFrom   string                 `json:"input_from,omitempty"`
 	OutputTo    string                 `json:"output_to,omitempty"`
@@ -50,15 +50,15 @@ type StepDefinition struct {
 	WorkDir     string                 `json:"work_dir,omitempty"`
 }
 
-// TriggerDefinition defines pipeline triggers
-type TriggerDefinition struct {
+// TriggerDef defines pipeline triggers for builder
+type TriggerDef struct {
 	Type      string                 `json:"type"` // webhook, schedule, event, manual
 	Config    map[string]interface{} `json:"config,omitempty"`
 	Enabled   bool                   `json:"enabled"`
 }
 
-// RetryConfig defines retry behavior
-type RetryConfig struct {
+// RetryCfg defines retry behavior for builder
+type RetryCfg struct {
 	MaxAttempts int    `json:"max_attempts"`
 	Delay       int    `json:"delay"`
 	Backoff     string `json:"backoff"` // linear, exponential
@@ -76,8 +76,8 @@ type ErrorConfig struct {
 // NewPipelineBuilder creates a new pipeline builder
 func NewPipelineBuilder() *PipelineBuilder {
 	return &PipelineBuilder{
-		pipeline: &PipelineDefinition{
-			Steps:     []StepDefinition{},
+		pipeline: &PipelineDef{
+			Steps:     []StepDef{},
 			Variables: make(map[string]interface{}),
 			Metadata:  make(map[string]interface{}),
 		},
@@ -139,7 +139,7 @@ func (b *PipelineBuilder) WithTimeout(seconds int) *PipelineBuilder {
 }
 
 // AddStep adds a step to the pipeline
-func (b *PipelineBuilder) AddStep(step StepDefinition) *PipelineBuilder {
+func (b *PipelineBuilder) AddStep(step StepDef) *PipelineBuilder {
 	if step.ID == "" {
 		b.errors = append(b.errors, errors.New("step ID is required"))
 		return b
@@ -154,7 +154,7 @@ func (b *PipelineBuilder) AddStep(step StepDefinition) *PipelineBuilder {
 
 // AddClaudeStep adds a Claude CLI step
 func (b *PipelineBuilder) AddClaudeStep(id, action string, params map[string]interface{}) *PipelineBuilder {
-	return b.AddStep(StepDefinition{
+	return b.AddStep(StepDef{
 		ID:     id,
 		CLI:    "claude",
 		Action: action,
@@ -164,7 +164,7 @@ func (b *PipelineBuilder) AddClaudeStep(id, action string, params map[string]int
 
 // AddGitStep adds a Git CLI step
 func (b *PipelineBuilder) AddGitStep(id, command string, params map[string]interface{}) *PipelineBuilder {
-	return b.AddStep(StepDefinition{
+	return b.AddStep(StepDef{
 		ID:      id,
 		CLI:     "git",
 		Command: command,
@@ -174,7 +174,7 @@ func (b *PipelineBuilder) AddGitStep(id, command string, params map[string]inter
 
 // AddNPMStep adds an NPM CLI step
 func (b *PipelineBuilder) AddNPMStep(id, command string, params map[string]interface{}) *PipelineBuilder {
-	return b.AddStep(StepDefinition{
+	return b.AddStep(StepDef{
 		ID:      id,
 		CLI:     "npm",
 		Command: command,
@@ -184,7 +184,7 @@ func (b *PipelineBuilder) AddNPMStep(id, command string, params map[string]inter
 
 // AddDockerStep adds a Docker CLI step
 func (b *PipelineBuilder) AddDockerStep(id, command string, params map[string]interface{}) *PipelineBuilder {
-	return b.AddStep(StepDefinition{
+	return b.AddStep(StepDef{
 		ID:      id,
 		CLI:     "docker",
 		Command: command,
@@ -200,7 +200,7 @@ func (b *PipelineBuilder) AddVariable(key string, value interface{}) *PipelineBu
 
 // AddWebhookTrigger adds a webhook trigger
 func (b *PipelineBuilder) AddWebhookTrigger(path string) *PipelineBuilder {
-	b.pipeline.Triggers = append(b.pipeline.Triggers, TriggerDefinition{
+	b.pipeline.Triggers = append(b.pipeline.Triggers, TriggerDef{
 		Type: "webhook",
 		Config: map[string]interface{}{
 			"path": path,
@@ -212,7 +212,7 @@ func (b *PipelineBuilder) AddWebhookTrigger(path string) *PipelineBuilder {
 
 // AddScheduleTrigger adds a schedule trigger (cron)
 func (b *PipelineBuilder) AddScheduleTrigger(cronExpr string) *PipelineBuilder {
-	b.pipeline.Triggers = append(b.pipeline.Triggers, TriggerDefinition{
+	b.pipeline.Triggers = append(b.pipeline.Triggers, TriggerDef{
 		Type: "schedule",
 		Config: map[string]interface{}{
 			"cron": cronExpr,
@@ -235,7 +235,7 @@ func (b *PipelineBuilder) WithMetadata(key string, value interface{}) *PipelineB
 }
 
 // Build validates and returns the pipeline
-func (b *PipelineBuilder) Build() (*PipelineDefinition, error) {
+func (b *PipelineBuilder) Build() (*PipelineDef, error) {
 	// Check for builder errors
 	if len(b.errors) > 0 {
 		return nil, fmt.Errorf("pipeline builder errors: %v", b.errors)

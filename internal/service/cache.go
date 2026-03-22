@@ -141,35 +141,35 @@ func (c *CacheService) GetOrSet(ctx context.Context, key string, dest interface{
 	return json.Unmarshal(data, dest)
 }
 
-// SchedulerService handles scheduled tasks
-type SchedulerService struct {
+// CacheScheduler handles scheduled cache tasks
+type CacheScheduler struct {
 	redis    *repository.RedisClient
-	tasks    map[string]*ScheduledTask
+	tasks    map[string]*ScheduledCacheTask
 	mu       sync.RWMutex
 	stopChan chan struct{}
 }
 
-// ScheduledTask represents a scheduled task
-type ScheduledTask struct {
-	ID        string
+// ScheduledCacheTask represents a scheduled cache task
+type ScheduledCacheTask struct {
+	ID         string
 	PipelineID string
-	Schedule  string
-	Enabled   bool
-	LastRun   *time.Time
-	NextRun   *time.Time
+	Schedule   string
+	Enabled    bool
+	LastRun    *time.Time
+	NextRun    *time.Time
 }
 
-// NewSchedulerService creates a new scheduler service
-func NewSchedulerService(redis *repository.RedisClient) *SchedulerService {
-	return &SchedulerService{
+// NewCacheScheduler creates a new cache scheduler
+func NewCacheScheduler(redis *repository.RedisClient) *CacheScheduler {
+	return &CacheScheduler{
 		redis:    redis,
-		tasks:    make(map[string]*ScheduledTask),
+		tasks:    make(map[string]*ScheduledCacheTask),
 		stopChan: make(chan struct{}),
 	}
 }
 
 // AddTask adds a scheduled task
-func (s *SchedulerService) AddTask(ctx context.Context, task *ScheduledTask) error {
+func (s *CacheScheduler) AddTask(ctx context.Context, task *ScheduledCacheTask) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -187,7 +187,7 @@ func (s *SchedulerService) AddTask(ctx context.Context, task *ScheduledTask) err
 }
 
 // RemoveTask removes a scheduled task
-func (s *SchedulerService) RemoveTask(ctx context.Context, taskID string) error {
+func (s *CacheScheduler) RemoveTask(ctx context.Context, taskID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -198,11 +198,11 @@ func (s *SchedulerService) RemoveTask(ctx context.Context, taskID string) error 
 }
 
 // Start starts the scheduler
-func (s *SchedulerService) Start(ctx context.Context, orchestrator *Orchestrator) {
+func (s *CacheScheduler) Start(ctx context.Context, orchestrator *Orchestrator) {
 	ticker := time.NewTicker(time.Minute)
 	defer ticker.Stop()
 
-	logger.Info("Scheduler started")
+	logger.Info("Cache scheduler started")
 
 	for {
 		select {
@@ -215,11 +215,11 @@ func (s *SchedulerService) Start(ctx context.Context, orchestrator *Orchestrator
 }
 
 // Stop stops the scheduler
-func (s *SchedulerService) Stop() {
+func (s *CacheScheduler) Stop() {
 	close(s.stopChan)
 }
 
-func (s *SchedulerService) checkAndRun(ctx context.Context, orchestrator *Orchestrator) {
+func (s *CacheScheduler) checkAndRun(ctx context.Context, orchestrator *Orchestrator) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -232,7 +232,7 @@ func (s *SchedulerService) checkAndRun(ctx context.Context, orchestrator *Orches
 
 		if task.NextRun != nil && now.After(*task.NextRun) {
 			// Run the pipeline
-			go func(t *ScheduledTask) {
+			go func(t *ScheduledCacheTask) {
 				req := &model.RunCreateRequest{
 					PipelineID: t.PipelineID,
 				}
@@ -253,7 +253,7 @@ func (s *SchedulerService) checkAndRun(ctx context.Context, orchestrator *Orches
 	}
 }
 
-func (s *SchedulerService) parseSchedule(schedule string) (time.Time, error) {
+func (s *CacheScheduler) parseSchedule(schedule string) (time.Time, error) {
 	// Simple interval parsing (e.g., "1h", "30m", "24h")
 	duration, err := time.ParseDuration(schedule)
 	if err != nil {
@@ -262,7 +262,7 @@ func (s *SchedulerService) parseSchedule(schedule string) (time.Time, error) {
 	return time.Now().Add(duration), nil
 }
 
-func (s *SchedulerService) saveTask(ctx context.Context, task *ScheduledTask) error {
+func (s *CacheScheduler) saveTask(ctx context.Context, task *ScheduledCacheTask) error {
 	data, err := json.Marshal(task)
 	if err != nil {
 		return err
@@ -271,11 +271,11 @@ func (s *SchedulerService) saveTask(ctx context.Context, task *ScheduledTask) er
 }
 
 // ListTasks lists all scheduled tasks
-func (s *SchedulerService) ListTasks() []*ScheduledTask {
+func (s *CacheScheduler) ListTasks() []*ScheduledCacheTask {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	tasks := make([]*ScheduledTask, 0, len(s.tasks))
+	tasks := make([]*ScheduledCacheTask, 0, len(s.tasks))
 	for _, task := range s.tasks {
 		tasks = append(tasks, task)
 	}
