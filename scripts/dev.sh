@@ -3,8 +3,6 @@
 # Development Setup Script for Claude CLI Pipeline Service
 # Usage: ./scripts/dev.sh [command]
 
-set -e
-
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -15,6 +13,16 @@ NC='\033[0m' # No Color
 # Project root
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
+
+# Docker Compose command (supports both v1 and v2)
+if docker compose version &>/dev/null; then
+    DOCKER_COMPOSE="docker compose"
+elif command -v docker-compose &>/dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+else
+    echo -e "${RED}Error: Docker Compose not found${NC}"
+    exit 1
+fi
 
 # PID files
 PID_DIR="/tmp/claude-pipeline"
@@ -82,7 +90,7 @@ check_prerequisites() {
         missing+=("Docker")
     fi
 
-    if ! command_exists docker-compose && ! docker compose version &>/dev/null; then
+    if ! docker compose version &>/dev/null && ! command_exists docker-compose; then
         missing+=("Docker Compose")
     fi
 
@@ -137,13 +145,27 @@ setup_project() {
 # Start Redis
 start_db() {
     echo -e "${BLUE}Starting Redis...${NC}"
-    docker-compose up -d redis 2>/dev/null || docker compose up -d redis
+
+    # Check if Docker is running
+    if ! docker info &>/dev/null; then
+        echo -e "${RED}Error: Docker is not running. Please start Docker first.${NC}"
+        exit 1
+    fi
+
+    # Start Redis container
+    $DOCKER_COMPOSE up -d redis
+
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to start Redis container${NC}"
+        exit 1
+    fi
+
     sleep 2
 
     # Wait for Redis to be ready
     echo -e "${YELLOW}Waiting for Redis...${NC}"
     for i in {1..30}; do
-        if docker-compose exec -T redis redis-cli ping 2>/dev/null | grep -q "PONG"; then
+        if $DOCKER_COMPOSE exec -T redis redis-cli ping 2>/dev/null | grep -q "PONG"; then
             echo -e "${GREEN}✓ Redis is ready${NC}"
             return 0
         fi
@@ -151,6 +173,7 @@ start_db() {
     done
 
     echo -e "${RED}Redis failed to start${NC}"
+    echo -e "${YELLOW}Try running: $DOCKER_COMPOSE logs redis${NC}"
     return 1
 }
 
@@ -189,7 +212,7 @@ stop_all() {
     fi
 
     # Stop Docker containers
-    docker-compose down 2>/dev/null || docker compose down 2>/dev/null || true
+    $DOCKER_COMPOSE down 2>/dev/null || true
 
     echo -e "${GREEN}✓ All services stopped${NC}"
 }
@@ -227,6 +250,18 @@ start_all_foreground() {
     # Wait a moment for API to start
     sleep 2
 
+    # Start Frontend in background (if exists)
+    if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
+        echo -e "${BLUE}Starting Frontend...${NC}"
+        cd frontend
+        npm run dev &
+        FRONTEND_PID=$!
+        echo $FRONTEND_PID > "$FRONTEND_PID_FILE"
+        cd ..
+        echo -e "${GREEN}✓ Frontend started (PID: $FRONTEND_PID)${NC}"
+        sleep 2
+    fi
+
     # Show status
     echo ""
     echo -e "${GREEN}══════════════════════════════════════${NC}"
@@ -234,15 +269,18 @@ start_all_foreground() {
     echo -e "${GREEN}══════════════════════════════════════${NC}"
     echo ""
     echo "Services:"
-    echo "  - API:    http://localhost:8080"
-    echo "  - Redis:  localhost:6379"
-    echo "  - Health: http://localhost:8080/health"
+    echo "  - Redis:     localhost:6379"
+    echo "  - API:       http://localhost:8080"
+    echo "  - Health:    http://localhost:8080/health"
+    if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
+        echo "  - Frontend:  http://localhost:3000"
+    fi
     echo ""
     echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
     echo ""
 
-    # Wait for API process
-    wait $API_PID
+    # Wait for processes
+    wait $API_PID $FRONTEND_PID 2>/dev/null
 }
 
 # Start all services in background
@@ -284,7 +322,7 @@ show_status() {
     echo ""
 
     # Check Redis
-    if docker-compose ps redis 2>/dev/null | grep -q "Up" || docker-compose ps 2>/dev/null | grep redis | grep -q "Up"; then
+    if $DOCKER_COMPOSE ps redis 2>/dev/null | grep -q "Up" || $DOCKER_COMPOSE ps 2>/dev/null | grep redis | grep -q "Up"; then
         echo -e "Redis:   ${GREEN}Running${NC} (localhost:6379)"
     else
         echo -e "Redis:   ${RED}Stopped${NC}"
@@ -331,9 +369,9 @@ show_logs() {
     local service=${1:-}
 
     if [ -n "$service" ]; then
-        docker-compose logs -f "$service" 2>/dev/null || docker compose logs -f "$service"
+        $DOCKER_COMPOSE logs -f "$service"
     else
-        docker-compose logs -f 2>/dev/null || docker compose logs -f
+        $DOCKER_COMPOSE logs -f
     fi
 }
 
@@ -387,13 +425,13 @@ clean_artifacts() {
 
 # Open Redis CLI
 db_cli() {
-    docker-compose exec redis redis-cli 2>/dev/null || docker compose exec redis redis-cli
+    $DOCKER_COMPOSE exec redis redis-cli
 }
 
 # Reset Redis data
 db_reset() {
     echo -e "${YELLOW}Resetting Redis data...${NC}"
-    docker-compose exec -T redis redis-cli FLUSHALL 2>/dev/null || docker compose exec -T redis redis-cli FLUSHALL
+    $DOCKER_COMPOSE exec -T redis redis-cli FLUSHALL
     echo -e "${GREEN}✓ Redis data reset${NC}"
 }
 
