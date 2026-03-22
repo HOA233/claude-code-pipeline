@@ -45,3 +45,25 @@
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--spacing-lg);
 }
+
+/* Dashboard Row for Charts and Health */
+.dashboard-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.charts-section {
+  min-height: 400px;
+}
+
+.health-section {
+  min-height: 400px;
+}

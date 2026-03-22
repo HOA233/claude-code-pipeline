@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Execution, ExecutionStatus } from '../types';
 import api from '../api/client';
+import { ExecutionDetailModal } from './ExecutionDetailModal';
+import { useToast } from './Toast';
 
 interface ExecutionListProps {
   tenantId?: string;
@@ -18,6 +20,9 @@ export const ExecutionList: React.FC<ExecutionListProps> = ({
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ExecutionStatus | ''>('');
+  const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
+  const [retryingId, setRetryingId] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   const fetchExecutions = useCallback(async () => {
     setLoading(true);
@@ -87,11 +92,30 @@ export const ExecutionList: React.FC<ExecutionListProps> = ({
   const handleCancelAll = async () => {
     try {
       const result = await api.cancelAllExecutions('running');
-      alert(`Cancelled ${result.count} executions`);
+      addToast(`已停止 ${result.count} 个运行中的任务`, 'success');
       fetchExecutions();
     } catch (error) {
       console.error('Failed to cancel all:', error);
+      addToast('停止任务失败', 'error');
     }
+  };
+
+  const handleRetry = async (id: string) => {
+    setRetryingId(id);
+    try {
+      await api.retryExecution(id);
+      addToast('任务已重新执行', 'success');
+      fetchExecutions();
+    } catch (error) {
+      console.error('Failed to retry execution:', error);
+      addToast('重试失败', 'error');
+    } finally {
+      setRetryingId(null);
+    }
+  };
+
+  const handleViewDetails = (id: string) => {
+    setSelectedExecutionId(id);
   };
 
   const getStatusIcon = (status: ExecutionStatus) => {
@@ -212,9 +236,14 @@ export const ExecutionList: React.FC<ExecutionListProps> = ({
                   </>
                 )}
                 {exec.status === 'failed' && (
-                  <button>重试</button>
+                  <button
+                    onClick={() => handleRetry(exec.id)}
+                    disabled={retryingId === exec.id}
+                  >
+                    {retryingId === exec.id ? '重试中...' : '重试'}
+                  </button>
                 )}
-                <button>详情</button>
+                <button onClick={() => handleViewDetails(exec.id)}>详情</button>
               </div>
             </div>
           ))}
@@ -242,6 +271,13 @@ export const ExecutionList: React.FC<ExecutionListProps> = ({
           下一页
         </button>
       </div>
+
+      {selectedExecutionId && (
+        <ExecutionDetailModal
+          executionId={selectedExecutionId}
+          onClose={() => setSelectedExecutionId(null)}
+        />
+      )}
     </div>
   );
 };

@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Execution, Agent, Workflow, ScheduledJob } from '../types';
 import api from '../api/client';
+import { ExecutionCharts } from './ExecutionCharts';
+import { SystemHealth } from './SystemHealth';
+import '../pages/Dashboard.css';
 
 interface DashboardStats {
   totalExecutions: number;
@@ -174,6 +177,16 @@ export const Dashboard: React.FC = () => {
             <span style={{ color: '#52c41a' }}>启用: {stats.enabledJobs}</span>
             <span style={{ color: '#8c8c8c' }}>禁用: {stats.totalJobs - stats.enabledJobs}</span>
           </div>
+        </div>
+      </div>
+
+      {/* Charts and Health Row */}
+      <div className="dashboard-row">
+        <div className="charts-section">
+          <ExecutionCharts />
+        </div>
+        <div className="health-section">
+          <SystemHealth />
         </div>
       </div>
 
