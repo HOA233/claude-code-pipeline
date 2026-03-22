@@ -92,7 +92,7 @@ func SetupRoutesWithAgent(r *gin.Engine, skillSvc *service.SkillService, taskSvc
 }
 
 // SetupRoutesWithAll sets up all routes including scheduled jobs, stats, and execution details
-func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService, metricsSvc *service.MetricsService, logSvc *service.ExecutionLogService) {
+func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService, metricsSvc *service.MetricsService, logSvc *service.ExecutionLogService, webhookSvc *service.WebhookService) {
 	// Set up agent routes
 	SetupRoutesWithAgent(r, skillSvc, taskSvc, executor, orch, redis, agentSvc, workflowSvc)
 
@@ -100,6 +100,8 @@ func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *
 	jobHandler := NewScheduledJobHandler(jobSvc)
 	statsHandler := NewStatsHandler(metricsSvc)
 	execDetailHandler := NewExecutionDetailHandler(workflowSvc, logSvc)
+	webhookHandler := NewWebhookHandler(webhookSvc)
+	configHandler := NewConfigHandler()
 
 	api := r.Group("/api")
 	{
@@ -126,6 +128,22 @@ func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *
 		api.GET("/executions/:id/stream", execDetailHandler.StreamExecutionLogs)
 		api.POST("/executions/:id/retry", execDetailHandler.RetryExecution)
 		api.GET("/metrics", execDetailHandler.GetExecutionMetrics)
+
+		// Webhooks
+		api.POST("/webhooks", webhookHandler.CreateWebhook)
+		api.GET("/webhooks", webhookHandler.ListWebhooks)
+		api.GET("/webhooks/:id", webhookHandler.GetWebhook)
+		api.PUT("/webhooks/:id", webhookHandler.UpdateWebhook)
+		api.DELETE("/webhooks/:id", webhookHandler.DeleteWebhook)
+		api.GET("/webhooks/:id/deliveries", webhookHandler.GetWebhookDeliveries)
+
+		// System Configuration
+		api.GET("/config", configHandler.GetConfig)
+		api.PUT("/config", configHandler.UpdateConfig)
+		api.GET("/config/features", configHandler.GetFeatures)
+		api.POST("/config/features/:feature/toggle", configHandler.ToggleFeature)
+		api.GET("/models", configHandler.GetModels)
+		api.GET("/categories", configHandler.GetCategories)
 	}
 
 	// SSE endpoints for real-time updates

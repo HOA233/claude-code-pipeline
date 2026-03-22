@@ -594,6 +594,11 @@ func (r *RedisClient) ListCacheKeys(ctx context.Context, pattern string) ([]stri
 	return r.client.Keys(ctx, pattern).Result()
 }
 
+// Keys is a generic method to list keys matching a pattern
+func (r *RedisClient) Keys(ctx context.Context, pattern string) ([]string, error) {
+	return r.client.Keys(ctx, pattern).Result()
+}
+
 // Get is an alias for GetCache
 func (r *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
 	return r.GetCache(ctx, key)

@@ -46,6 +46,7 @@ func main() {
 	scheduledJobService := service.NewScheduledJobService(redisClient, workflowService)
 	metricsService := service.NewMetricsService(redisClient)
 	logService := service.NewExecutionLogService(redisClient)
+	webhookService := service.NewWebhookService(redisClient)
 
 	// Sync default skills
 	if _, err := skillService.SyncFromGitLab(context.Background()); err != nil {
@@ -79,6 +80,7 @@ func main() {
 		scheduledJobService,
 		metricsService,
 		logService,
+		webhookService,
 	)
 
 	// Graceful shutdown
