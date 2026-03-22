@@ -29,6 +29,40 @@ func NewServer(cfg *config.Config, skillSvc *service.SkillService, taskSvc *serv
 	return &Server{Engine: r, cfg: cfg}
 }
 
+// NewServerWithAgent creates server with Agent orchestration support
+func NewServerWithAgent(cfg *config.Config, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService) *Server {
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
+	r.Use(CORSMiddleware())
+
+	SetupRoutesWithAgent(r, skillSvc, taskSvc, executor, orch, redis, agentSvc, workflowSvc)
+
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
+	return &Server{Engine: r, cfg: cfg}
+}
+
+// NewServerWithAll creates server with all features including scheduled jobs and metrics
+func NewServerWithAll(cfg *config.Config, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService, metricsSvc *service.MetricsService, logSvc *service.ExecutionLogService) *Server {
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
+	r.Use(CORSMiddleware())
+
+	SetupRoutesWithAll(r, skillSvc, taskSvc, executor, orch, redis, agentSvc, workflowSvc, jobSvc, metricsSvc, logSvc)
+
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
+	return &Server{Engine: r, cfg: cfg}
+}
+
 func (s *Server) Run() error {
 	return s.Engine.Run(":8080")
 }

@@ -34,23 +34,52 @@ func main() {
 	}
 	logger.Info("Connected to Redis")
 
-	// Init services
+	// Init legacy services
 	skillService := service.NewSkillService(redisClient, cfg.GitLab)
 	taskService := service.NewTaskService(redisClient)
-	executor := service.NewCLIExecutor(redisClient, cfg.CLI)
-	orchestrator := service.NewOrchestrator(redisClient, executor)
+	cliExecutor := service.NewCLIExecutor(redisClient, cfg.CLI)
+	orchestrator := service.NewOrchestrator(redisClient, cliExecutor)
+
+	// Init new Agent orchestration services
+	agentService := service.NewAgentService(redisClient)
+	workflowService := service.NewWorkflowService(redisClient, agentService)
+	scheduledJobService := service.NewScheduledJobService(redisClient, workflowService)
+	metricsService := service.NewMetricsService(redisClient)
+	logService := service.NewExecutionLogService(redisClient)
 
 	// Sync default skills
 	if _, err := skillService.SyncFromGitLab(context.Background()); err != nil {
 		logger.Warn("Failed to sync skills: ", err)
 	}
 
+	// Load preset agents and workflows
+	presetService := service.NewPresetService(redisClient, agentService, workflowService)
+	if err := presetService.InitializePresets(context.Background()); err != nil {
+		logger.Warn("Failed to load presets: ", err)
+	}
+
 	// Start consumers
-	go executor.StartConsumer(context.Background())
+	go cliExecutor.StartConsumer(context.Background())
 	go orchestrator.StartConsumer(context.Background())
 
-	// Start HTTP server
-	server := api.NewServer(cfg, skillService, taskService, executor, orchestrator, redisClient)
+	// Start scheduled job scheduler
+	scheduler := service.NewScheduler(redisClient, scheduledJobService)
+	go scheduler.Start(context.Background())
+
+	// Start HTTP server with all features
+	server := api.NewServerWithAll(
+		cfg,
+		skillService,
+		taskService,
+		cliExecutor,
+		orchestrator,
+		redisClient,
+		agentService,
+		workflowService,
+		scheduledJobService,
+		metricsService,
+		logService,
+	)
 
 	// Graceful shutdown
 	quit := make(chan os.Signal, 1)
@@ -59,8 +88,9 @@ func main() {
 	go func() {
 		<-quit
 		logger.Info("Shutting down server...")
-		executor.Stop()
+		cliExecutor.Stop()
 		orchestrator.Stop()
+		scheduler.Stop()
 	}()
 
 	logger.Info("Server starting on :8080")

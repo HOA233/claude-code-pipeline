@@ -91,13 +91,15 @@ func SetupRoutesWithAgent(r *gin.Engine, skillSvc *service.SkillService, taskSvc
 	}
 }
 
-// SetupRoutesWithAll sets up all routes including scheduled jobs
-func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService) {
+// SetupRoutesWithAll sets up all routes including scheduled jobs, stats, and execution details
+func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService, metricsSvc *service.MetricsService, logSvc *service.ExecutionLogService) {
 	// Set up agent routes
 	SetupRoutesWithAgent(r, skillSvc, taskSvc, executor, orch, redis, agentSvc, workflowSvc)
 
-	// Initialize job handler
+	// Initialize handlers
 	jobHandler := NewScheduledJobHandler(jobSvc)
+	statsHandler := NewStatsHandler(metricsSvc)
+	execDetailHandler := NewExecutionDetailHandler(workflowSvc, logSvc)
 
 	api := r.Group("/api")
 	{
@@ -111,7 +113,25 @@ func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *
 		api.POST("/schedules/:id/disable", jobHandler.DisableJob)
 		api.POST("/schedules/:id/trigger", jobHandler.TriggerJob)
 		api.GET("/schedules/:id/history", jobHandler.GetJobHistory)
+
+		// Stats & Metrics
+		api.GET("/stats/system", statsHandler.GetSystemMetrics)
+		api.GET("/stats/trends", statsHandler.GetExecutionTrend)
+		api.GET("/stats/workflows", statsHandler.GetWorkflowStats)
+		api.GET("/stats/health", statsHandler.GetHealthStatus)
+
+		// Execution Details
+		api.GET("/executions/:id/details", execDetailHandler.GetExecutionDetails)
+		api.GET("/executions/:id/logs", execDetailHandler.GetExecutionLogs)
+		api.GET("/executions/:id/stream", execDetailHandler.StreamExecutionLogs)
+		api.POST("/executions/:id/retry", execDetailHandler.RetryExecution)
+		api.GET("/metrics", execDetailHandler.GetExecutionMetrics)
 	}
+
+	// SSE endpoints for real-time updates
+	sseHandler := NewTaskSSEHandler(redis)
+	r.GET("/sse/executions", sseHandler.HandleGlobalSSE)
+	r.GET("/sse/executions/:id", sseHandler.HandleTaskSSE)
 }
 
 // SetupRoutesWithScheduler sets up routes including scheduler endpoints
