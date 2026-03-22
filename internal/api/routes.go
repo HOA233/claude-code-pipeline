@@ -92,7 +92,7 @@ func SetupRoutesWithAgent(r *gin.Engine, skillSvc *service.SkillService, taskSvc
 }
 
 // SetupRoutesWithAll sets up all routes including scheduled jobs, stats, and execution details
-func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService, metricsSvc *service.MetricsService, logSvc *service.ExecutionLogService, webhookSvc *service.WebhookService) {
+func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService, metricsSvc *service.MetricsService, logSvc *service.ExecutionLogService, webhookSvc *service.WebhookService, templateSvc *service.TemplateService) {
 	// Set up agent routes
 	SetupRoutesWithAgent(r, skillSvc, taskSvc, executor, orch, redis, agentSvc, workflowSvc)
 
@@ -102,6 +102,7 @@ func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *
 	execDetailHandler := NewExecutionDetailHandler(workflowSvc, logSvc)
 	webhookHandler := NewWebhookHandler(webhookSvc)
 	configHandler := NewConfigHandler()
+	templateHandler := NewTemplateHandler(templateSvc)
 
 	api := r.Group("/api")
 	{
@@ -144,6 +145,13 @@ func SetupRoutesWithAll(r *gin.Engine, skillSvc *service.SkillService, taskSvc *
 		api.POST("/config/features/:feature/toggle", configHandler.ToggleFeature)
 		api.GET("/models", configHandler.GetModels)
 		api.GET("/categories", configHandler.GetCategories)
+
+		// Templates
+		api.GET("/templates/builtin", templateHandler.GetBuiltInTemplates)
+		api.GET("/templates/custom", templateHandler.ListCustomTemplates)
+		api.POST("/templates/custom", templateHandler.SaveCustomTemplate)
+		api.DELETE("/templates/custom/:id", templateHandler.DeleteCustomTemplate)
+		api.POST("/templates/:id/instantiate", templateHandler.InstantiateTemplate)
 	}
 
 	// SSE endpoints for real-time updates

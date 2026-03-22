@@ -47,14 +47,14 @@ func NewServerWithAgent(cfg *config.Config, skillSvc *service.SkillService, task
 }
 
 // NewServerWithAll creates server with all features including scheduled jobs and metrics
-func NewServerWithAll(cfg *config.Config, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService, metricsSvc *service.MetricsService, logSvc *service.ExecutionLogService, webhookSvc *service.WebhookService) *Server {
+func NewServerWithAll(cfg *config.Config, skillSvc *service.SkillService, taskSvc *service.TaskService, executor *service.CLIExecutor, orch *service.Orchestrator, redis *repository.RedisClient, agentSvc *service.AgentService, workflowSvc *service.WorkflowService, jobSvc *service.ScheduledJobService, metricsSvc *service.MetricsService, logSvc *service.ExecutionLogService, webhookSvc *service.WebhookService, templateSvc *service.TemplateService) *Server {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 	r.Use(CORSMiddleware())
 
-	SetupRoutesWithAll(r, skillSvc, taskSvc, executor, orch, redis, agentSvc, workflowSvc, jobSvc, metricsSvc, logSvc, webhookSvc)
+	SetupRoutesWithAll(r, skillSvc, taskSvc, executor, orch, redis, agentSvc, workflowSvc, jobSvc, metricsSvc, logSvc, webhookSvc, templateSvc)
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
