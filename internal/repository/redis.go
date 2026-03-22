@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/company/claude-pipeline/internal/config"
@@ -376,7 +377,7 @@ func (r *RedisClient) IncrementRateLimit(ctx context.Context, key string, window
 	return int(val), nil
 }
 
-func (r *RedisClient) GetRateLimit(key string) (int, error) {
+func (r *RedisClient) GetRateLimit(ctx context.Context, key string) (int, error) {
 	val, err := r.client.Get(ctx, "ratelimit:"+key).Int()
 	if err == redis.Nil {
 		return 0, nil

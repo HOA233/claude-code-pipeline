@@ -251,7 +251,7 @@ func TestRateLimiting(t *testing.T) {
 	}
 
 	// Verify count
-	count, err := client.GetRateLimit(key)
+	count, err := client.GetRateLimit(ctx, key)
 	require.NoError(t, err)
 	assert.Equal(t, 5, count)
 }
