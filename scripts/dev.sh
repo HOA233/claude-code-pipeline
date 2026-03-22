@@ -16,6 +16,14 @@ NC='\033[0m' # No Color
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
+# PID files
+PID_DIR="/tmp/claude-pipeline"
+API_PID_FILE="$PID_DIR/api.pid"
+FRONTEND_PID_FILE="$PID_DIR/frontend.pid"
+
+# Ensure PID directory exists
+mkdir -p "$PID_DIR"
+
 # Print banner
 print_banner() {
     echo -e "${BLUE}"
@@ -44,11 +52,13 @@ print_usage() {
     echo "  db          - Start only Redis"
     echo "  db-cli      - Open Redis CLI"
     echo "  db-reset    - Reset Redis data"
-    echo "  api         - Start only API server"
+    echo "  api         - Start only API server (foreground)"
+    echo "  api-bg      - Start API server in background"
     echo "  build       - Build binary"
     echo "  frontend    - Start frontend dev server"
     echo "  install     - Install all dependencies"
     echo "  check       - Run all checks (fmt, lint, test)"
+    echo "  dev         - Start all services in foreground (Ctrl+C to stop all)"
     echo "  help        - Show this help message"
     echo ""
 }
@@ -72,7 +82,7 @@ check_prerequisites() {
         missing+=("Docker")
     fi
 
-    if ! command_exists docker-compose && ! command_exists docker; then
+    if ! command_exists docker-compose && ! docker compose version &>/dev/null; then
         missing+=("Docker Compose")
     fi
 
@@ -107,7 +117,7 @@ setup_project() {
     go mod tidy
 
     # Install frontend dependencies
-    if [ -d "frontend" ]; then
+    if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
         echo -e "${YELLOW}Installing frontend dependencies...${NC}"
         cd frontend
         npm install
@@ -121,18 +131,134 @@ setup_project() {
     echo ""
     echo "Next steps:"
     echo "  1. Edit .env with your configuration"
-    echo "  2. Run: ./scripts/dev.sh start"
+    echo "  2. Run: ./scripts/dev.sh dev"
 }
 
-# Start all services
-start_all() {
+# Start Redis
+start_db() {
+    echo -e "${BLUE}Starting Redis...${NC}"
+    docker-compose up -d redis 2>/dev/null || docker compose up -d redis
+    sleep 2
+
+    # Wait for Redis to be ready
+    echo -e "${YELLOW}Waiting for Redis...${NC}"
+    for i in {1..30}; do
+        if docker-compose exec -T redis redis-cli ping 2>/dev/null | grep -q "PONG"; then
+            echo -e "${GREEN}✓ Redis is ready${NC}"
+            return 0
+        fi
+        sleep 1
+    done
+
+    echo -e "${RED}Redis failed to start${NC}"
+    return 1
+}
+
+# Stop all services
+stop_all() {
+    echo -e "${BLUE}Stopping all services...${NC}"
+
+    # Stop API process
+    if [ -f "$API_PID_FILE" ]; then
+        local pid=$(cat "$API_PID_FILE")
+        if kill -0 "$pid" 2>/dev/null; then
+            echo -e "${YELLOW}Stopping API (PID: $pid)...${NC}"
+            kill "$pid" 2>/dev/null || true
+            # Wait for process to die
+            for i in {1..10}; do
+                if ! kill -0 "$pid" 2>/dev/null; then
+                    break
+                fi
+                sleep 1
+            done
+            # Force kill if still running
+            kill -9 "$pid" 2>/dev/null || true
+        fi
+        rm -f "$API_PID_FILE"
+    fi
+
+    # Stop Frontend process
+    if [ -f "$FRONTEND_PID_FILE" ]; then
+        local pid=$(cat "$FRONTEND_PID_FILE")
+        if kill -0 "$pid" 2>/dev/null; then
+            echo -e "${YELLOW}Stopping Frontend (PID: $pid)...${NC}"
+            kill "$pid" 2>/dev/null || true
+            kill -9 "$pid" 2>/dev/null || true
+        fi
+        rm -f "$FRONTEND_PID_FILE"
+    fi
+
+    # Stop Docker containers
+    docker-compose down 2>/dev/null || docker compose down 2>/dev/null || true
+
+    echo -e "${GREEN}✓ All services stopped${NC}"
+}
+
+# Cleanup function for trap
+cleanup() {
+    echo ""
+    echo -e "${YELLOW}Shutting down...${NC}"
+    stop_all
+    exit 0
+}
+
+# Start all services in foreground (with cleanup on exit)
+start_all_foreground() {
+    echo -e "${BLUE}Starting all services in foreground...${NC}"
+    echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
+    echo ""
+
+    # Set trap for cleanup
+    trap cleanup SIGINT SIGTERM
+
+    # Start Redis
+    start_db
+
+    # Create logs directory
+    mkdir -p logs
+
+    # Start API in background
+    echo -e "${BLUE}Starting API server...${NC}"
+    go run ./cmd/server &
+    API_PID=$!
+    echo $API_PID > "$API_PID_FILE"
+    echo -e "${GREEN}✓ API started (PID: $API_PID)${NC}"
+
+    # Wait a moment for API to start
+    sleep 2
+
+    # Show status
+    echo ""
+    echo -e "${GREEN}══════════════════════════════════════${NC}"
+    echo -e "${GREEN}  All services running!${NC}"
+    echo -e "${GREEN}══════════════════════════════════════${NC}"
+    echo ""
+    echo "Services:"
+    echo "  - API:    http://localhost:8080"
+    echo "  - Redis:  localhost:6379"
+    echo "  - Health: http://localhost:8080/health"
+    echo ""
+    echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
+    echo ""
+
+    # Wait for API process
+    wait $API_PID
+}
+
+# Start all services in background
+start_all_background() {
     echo -e "${BLUE}Starting all services...${NC}"
 
     # Start Redis
     start_db
 
-    # Start API
-    start_api
+    # Start API in background
+    echo -e "${BLUE}Starting API server...${NC}"
+    nohup go run ./cmd/server > logs/api.log 2>&1 &
+    API_PID=$!
+    echo $API_PID > "$API_PID_FILE"
+
+    sleep 2
 
     echo -e "${GREEN}✓ All services started${NC}"
     echo ""
@@ -140,26 +266,16 @@ start_all() {
     echo "  - API:    http://localhost:8080"
     echo "  - Redis:  localhost:6379"
     echo "  - Health: http://localhost:8080/health"
-}
-
-# Stop all services
-stop_all() {
-    echo -e "${BLUE}Stopping all services...${NC}"
-
-    # Stop Docker containers
-    docker-compose down 2>/dev/null || true
-
-    # Kill any running Go processes
-    pkill -f "go run ./cmd/server" 2>/dev/null || true
-
-    echo -e "${GREEN}✓ All services stopped${NC}"
+    echo ""
+    echo "To stop: ./scripts/dev.sh stop"
+    echo "To view logs: ./scripts/dev.sh logs"
 }
 
 # Restart all services
 restart_all() {
     stop_all
     sleep 2
-    start_all
+    start_all_background
 }
 
 # Show status
@@ -168,24 +284,45 @@ show_status() {
     echo ""
 
     # Check Redis
-    if docker-compose ps redis 2>/dev/null | grep -q "Up"; then
-        echo -e "Redis:   ${GREEN}Running${NC}"
+    if docker-compose ps redis 2>/dev/null | grep -q "Up" || docker-compose ps 2>/dev/null | grep redis | grep -q "Up"; then
+        echo -e "Redis:   ${GREEN}Running${NC} (localhost:6379)"
     else
         echo -e "Redis:   ${RED}Stopped${NC}"
     fi
 
     # Check API
-    if curl -s http://localhost:8080/health > /dev/null 2>&1; then
-        echo -e "API:     ${GREEN}Running${NC}"
+    if [ -f "$API_PID_FILE" ]; then
+        local pid=$(cat "$API_PID_FILE")
+        if kill -0 "$pid" 2>/dev/null; then
+            echo -e "API:     ${GREEN}Running${NC} (PID: $pid, http://localhost:8080)"
+        else
+            echo -e "API:     ${RED}Stopped (stale PID file)${NC}"
+            rm -f "$API_PID_FILE"
+        fi
     else
-        echo -e "API:     ${RED}Stopped${NC}"
+        # Try to check if API is responding
+        if curl -s http://localhost:8080/health > /dev/null 2>&1; then
+            echo -e "API:     ${GREEN}Running${NC} (http://localhost:8080)"
+        else
+            echo -e "API:     ${RED}Stopped${NC}"
+        fi
     fi
 
     # Check Frontend
-    if curl -s http://localhost:3000 > /dev/null 2>&1; then
-        echo -e "Frontend: ${GREEN}Running${NC}"
+    if [ -f "$FRONTEND_PID_FILE" ]; then
+        local pid=$(cat "$FRONTEND_PID_FILE")
+        if kill -0 "$pid" 2>/dev/null; then
+            echo -e "Frontend: ${GREEN}Running${NC} (PID: $pid, http://localhost:3000)"
+        else
+            echo -e "Frontend: ${RED}Stopped${NC}"
+            rm -f "$FRONTEND_PID_FILE"
+        fi
     else
-        echo -e "Frontend: ${RED}Stopped${NC}"
+        if curl -s http://localhost:3000 > /dev/null 2>&1; then
+            echo -e "Frontend: ${GREEN}Running${NC} (http://localhost:3000)"
+        else
+            echo -e "Frontend: ${RED}Stopped${NC}"
+        fi
     fi
 }
 
@@ -194,9 +331,9 @@ show_logs() {
     local service=${1:-}
 
     if [ -n "$service" ]; then
-        docker-compose logs -f "$service"
+        docker-compose logs -f "$service" 2>/dev/null || docker compose logs -f "$service"
     else
-        docker-compose logs -f
+        docker-compose logs -f 2>/dev/null || docker compose logs -f
     fi
 }
 
@@ -244,58 +381,55 @@ clean_artifacts() {
     echo -e "${BLUE}Cleaning build artifacts...${NC}"
     rm -rf bin/
     rm -f coverage.out coverage.html
+    rm -rf "$PID_DIR"
     echo -e "${GREEN}✓ Cleaned${NC}"
-}
-
-# Start only Redis
-start_db() {
-    echo -e "${BLUE}Starting Redis...${NC}"
-    docker-compose up -d redis
-    sleep 2
-
-    # Wait for Redis to be ready
-    echo -e "${YELLOW}Waiting for Redis...${NC}"
-    for i in {1..30}; do
-        if docker-compose exec -T redis redis-cli ping 2>/dev/null | grep -q "PONG"; then
-            echo -e "${GREEN}✓ Redis is ready${NC}"
-            return 0
-        fi
-        sleep 1
-    done
-
-    echo -e "${RED}Redis failed to start${NC}"
-    return 1
 }
 
 # Open Redis CLI
 db_cli() {
-    docker-compose exec redis redis-cli
+    docker-compose exec redis redis-cli 2>/dev/null || docker compose exec redis redis-cli
 }
 
 # Reset Redis data
 db_reset() {
     echo -e "${YELLOW}Resetting Redis data...${NC}"
-    docker-compose exec -T redis redis-cli FLUSHALL
+    docker-compose exec -T redis redis-cli FLUSHALL 2>/dev/null || docker compose exec -T redis redis-cli FLUSHALL
     echo -e "${GREEN}✓ Redis data reset${NC}"
 }
 
-# Start only API
-start_api() {
-    echo -e "${BLUE}Starting API server...${NC}"
+# Start API in foreground
+start_api_foreground() {
+    echo -e "${BLUE}Starting API server in foreground...${NC}"
+    echo -e "${YELLOW}Press Ctrl+C to stop${NC}"
+    echo ""
 
-    # Check if .env exists
-    if [ ! -f .env ]; then
-        echo -e "${YELLOW}Warning: .env file not found, using defaults${NC}"
-    fi
+    # Ensure Redis is running
+    start_db
 
-    # Run in background or foreground
-    if [ "$1" == "--bg" ]; then
-        nohup go run ./cmd/server > logs/api.log 2>&1 &
-        echo $! > /tmp/api.pid
-        echo -e "${GREEN}✓ API started in background (PID: $(cat /tmp/api.pid))${NC}"
-    else
-        go run ./cmd/server
-    fi
+    # Run API
+    go run ./cmd/server
+}
+
+# Start API in background
+start_api_background() {
+    echo -e "${BLUE}Starting API server in background...${NC}"
+
+    # Ensure Redis is running
+    start_db
+
+    # Create logs directory
+    mkdir -p logs
+
+    # Start API
+    nohup go run ./cmd/server > logs/api.log 2>&1 &
+    API_PID=$!
+    echo $API_PID > "$API_PID_FILE"
+
+    echo -e "${GREEN}✓ API started (PID: $API_PID)${NC}"
+    echo "  URL: http://localhost:8080"
+    echo "  Logs: logs/api.log"
+    echo ""
+    echo "To stop: ./scripts/dev.sh stop"
 }
 
 # Build binary
@@ -311,9 +445,14 @@ build_binary() {
 start_frontend() {
     echo -e "${BLUE}Starting frontend dev server...${NC}"
 
-    if [ -d "frontend" ]; then
+    if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
         cd frontend
-        npm run dev
+        npm run dev &
+        FRONTEND_PID=$!
+        echo $FRONTEND_PID > "$FRONTEND_PID_FILE"
+        cd ..
+        echo -e "${GREEN}✓ Frontend started (PID: $FRONTEND_PID)${NC}"
+        echo "  URL: http://localhost:3000"
     else
         echo -e "${RED}Frontend directory not found${NC}"
     fi
@@ -329,7 +468,7 @@ install_deps() {
     go mod tidy
 
     # Frontend dependencies
-    if [ -d "frontend/package.json" ]; then
+    if [ -d "frontend" ] && [ -f "frontend/package.json" ]; then
         echo -e "${YELLOW}Frontend dependencies...${NC}"
         cd frontend
         npm install
@@ -369,7 +508,10 @@ case "${1:-help}" in
         setup_project
         ;;
     start)
-        start_all
+        start_all_background
+        ;;
+    dev)
+        start_all_foreground
         ;;
     stop)
         stop_all
@@ -408,7 +550,10 @@ case "${1:-help}" in
         db_reset
         ;;
     api)
-        start_api "$2"
+        start_api_foreground
+        ;;
+    api-bg)
+        start_api_background
         ;;
     build)
         build_binary
